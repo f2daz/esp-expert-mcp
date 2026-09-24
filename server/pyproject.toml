@@ -3,6 +3,8 @@ name = "esp-expert-mcp"
 version = "0.1.0"
 description = "MCP-Server für ESP32/ESP8266-Firmwareentwicklung: Pin-Prüfung, Partitionstabellen, Panic-Decoder, sdkconfig, Serial-Ports, Live-Versionen, ESPHome-Lint."
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["../LICENSE"]
 dependencies = [
     "mcp>=2.2,<3",
     "pyserial>=3.5",

@@ -14,5 +14,6 @@
     "esphome",
     "firmware",
     "embedded"
-  ]
+  ],
+  "license": "MIT"
 }

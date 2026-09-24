@@ -73,3 +73,7 @@ Chip-Daten: `server/src/esp_expert_mcp/data/chips.json`. Sie stammen aus den ESP
 ## Herkunft
 
 Als Ideengeber dienten [adamlipecz/esp32-firmware-engineer-skill](https://github.com/adamlipecz/esp32-firmware-engineer-skill) (ESP-IDF, strenge Blocker-Regeln), [onigetoc/esp32-skill](https://github.com/onigetoc/esp32-skill) (Arduino-CLI-Workflow) und die [ESPHome-Doku](https://esphome.io/install/getting-started/). Beide Repos haben keine Lizenz. Deshalb wurden nur Struktur und Themen übernommen, alle Texte und der gesamte Code sind neu geschrieben.
+
+## Lizenz
+
+[MIT](LICENSE) – frei nutzbar, auch kommerziell; der Lizenzhinweis muss erhalten bleiben.

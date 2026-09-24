@@ -16,7 +16,7 @@ YAML-basierte Firmware für ESP32/ESP8266 (u. a.), eng mit Home Assistant verzah
   pip install "esphome-device-builder[esphome]"        # mit Web-Oberfläche
   esphome-device-builder config                        # Oberfläche starten (Konfig-Ordner)
   ```
-  Alternativ isoliert mit `pipx install esphome` oder `uv tool install esphome` (nicht in der offiziellen Doku genannt, prüfen).
+  Alternativ isoliert mit `pipx install esphome` oder `uv tool install esphome` bzw. einmalig `uvx esphome config geraet.yaml` (nicht in der offiziellen Doku genannt; `uvx` mit ESPHome 2026.9.0 getestet).
 - **Desktop-Apps** (Windows/macOS/Linux) mit eigener Python-Umgebung.
 - **Ab 2026.7:** das eingebaute Dashboard (`esphome dashboard`) ist entfernt → separates Paket `esphome-device-builder`. Docker/HA-Nutzer sind nicht betroffen.
 
