@@ -1,4 +1,4 @@
-"""Auswertung von sdkconfig / sdkconfig.defaults (ESP-IDF, auch Arduino-as-component, ESPHome-IDF-Builds)."""
+"""Evaluation of sdkconfig / sdkconfig.defaults (ESP-IDF, also Arduino-as-component, ESPHome IDF builds)."""
 
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ KEY_SETTINGS = {
 
 
 def parse(text: str) -> dict[str, str | None]:
-    """Gibt {KEY: wert} zurück; 'is not set' wird als None abgelegt. Strings ohne Anführungszeichen."""
+    """Returns {KEY: value}; 'is not set' is stored as None. Strings without quotes."""
     values: dict[str, str | None] = {}
     for raw in text.splitlines():
         line = raw.strip()
@@ -78,41 +78,41 @@ def analyze(sdkconfig_path: str, defaults_path: str | None = None) -> dict:
         findings.append({"level": level, "message": msg})
 
     if _on(cfg, "CONFIG_SECURE_FLASH_ENC_ENABLED") and _on(cfg, "CONFIG_SECURE_FLASH_ENCRYPTION_MODE_DEVELOPMENT"):
-        add("warning", "Flash-Encryption im DEVELOPMENT-Modus – für Serie RELEASE-Modus nutzen (eFuses werden dann endgültig gebrannt).")
+        add("warning", "Flash encryption in DEVELOPMENT mode – use RELEASE mode for production (eFuses are then burned permanently).")
     if _on(cfg, "CONFIG_SECURE_BOOT") and not _on(cfg, "CONFIG_SECURE_BOOT_V2_ENABLED"):
-        add("warning", "Secure Boot aktiv, aber nicht V2 – V2 (RSA-PSS/ECDSA) verwenden, sofern das Target es unterstützt.")
+        add("warning", "Secure Boot enabled but not V2 – use V2 (RSA-PSS/ECDSA) if the target supports it.")
     if _on(cfg, "CONFIG_SECURE_FLASH_ENC_ENABLED") and not _on(cfg, "CONFIG_NVS_ENCRYPTION"):
-        add("info", "Flash-Encryption ohne NVS-Encryption – NVS-Inhalte (z. B. Wi-Fi-Credentials) liegen sonst unverschlüsselt.")
+        add("info", "Flash encryption without NVS encryption – NVS contents (e.g. Wi-Fi credentials) remain unencrypted.")
     if cfg.get("CONFIG_ESP_BROWNOUT_DET") is None and "CONFIG_ESP_BROWNOUT_DET" in cfg:
-        add("warning", "Brownout-Detektor deaktiviert – verdeckt Versorgungsprobleme statt sie zu lösen.")
+        add("warning", "Brownout detector disabled – hides supply problems instead of solving them.")
     if cfg.get("CONFIG_ESP_TASK_WDT_EN") is None and "CONFIG_ESP_TASK_WDT_EN" in cfg:
-        add("warning", "Task-Watchdog deaktiviert – Hänger werden nicht mehr erkannt.")
+        add("warning", "Task watchdog disabled – hangs are no longer detected.")
     if _on(cfg, "CONFIG_COMPILER_OPTIMIZATION_DEBUG"):
-        add("info", "Optimierung -Og (Debug): größeres, langsameres Binary – für Release auf SIZE oder PERF stellen.")
+        add("info", "Optimization -Og (debug): larger, slower binary – set to SIZE or PERF for release.")
     if cfg.get("CONFIG_LOG_DEFAULT_LEVEL") in ("4", "5"):
-        add("info", "Default-Loglevel DEBUG/VERBOSE – kostet Flash und Laufzeit; für Release auf INFO/WARN senken.")
+        add("info", "Default log level DEBUG/VERBOSE – costs flash and runtime; lower to INFO/WARN for release.")
     if _on(cfg, "CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH"):
-        add("info", "Core-Dump in Flash aktiv – Partition 'coredump' (data, coredump) muss in der Partitionstabelle existieren.")
+        add("info", "Core dump to flash enabled – partition 'coredump' (data, coredump) must exist in the partition table.")
     if _on(cfg, "CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE"):
-        add("info", "App-Rollback aktiv – neue Firmware muss esp_ota_mark_app_valid_cancel_rollback() aufrufen, sonst Rückfall nach Reset.")
+        add("info", "App rollback enabled – new firmware must call esp_ota_mark_app_valid_cancel_rollback(), otherwise it rolls back after reset.")
     if _on(cfg, "CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK") and not _on(cfg, "CONFIG_SECURE_BOOT"):
-        add("warning", "Anti-Rollback ohne Secure Boot bietet kaum Schutz.")
+        add("warning", "Anti-rollback without Secure Boot offers little protection.")
     try:
         hz = int(cfg.get("CONFIG_FREERTOS_HZ") or 0)
         if hz and hz != 1000 and hz != 100:
-            add("info", f"FreeRTOS-Tick {hz} Hz – pdMS_TO_TICKS rundet; kurze Delays prüfen.")
+            add("info", f"FreeRTOS tick {hz} Hz – pdMS_TO_TICKS rounds; check short delays.")
         if hz == 100:
-            add("info", "FreeRTOS-Tick 100 Hz: vTaskDelay(pdMS_TO_TICKS(x)) mit x < 10 ergibt 0 Ticks.")
+            add("info", "FreeRTOS tick 100 Hz: vTaskDelay(pdMS_TO_TICKS(x)) with x < 10 yields 0 ticks.")
     except ValueError:
         pass
     try:
         stack = int(cfg.get("CONFIG_ESP_MAIN_TASK_STACK_SIZE") or 0)
         if stack and stack < 3584:
-            add("warning", f"Main-Task-Stack nur {stack} B – bei Logging/printf/JSON schnell zu knapp.")
+            add("warning", f"Main task stack only {stack} B – quickly too small with logging/printf/JSON.")
     except ValueError:
         pass
     if cfg.get("CONFIG_PARTITION_TABLE_CUSTOM") == "y":
-        add("info", f"Eigene Partitionstabelle: {cfg.get('CONFIG_PARTITION_TABLE_CUSTOM_FILENAME')} – mit partition_validate prüfen.")
+        add("info", f"Custom partition table: {cfg.get('CONFIG_PARTITION_TABLE_CUSTOM_FILENAME')} – check with partition_validate.")
 
     csv_path = None
     if cfg.get("CONFIG_PARTITION_TABLE_CUSTOM") == "y" and cfg.get("CONFIG_PARTITION_TABLE_CUSTOM_FILENAME"):
@@ -131,14 +131,14 @@ def analyze(sdkconfig_path: str, defaults_path: str | None = None) -> dict:
             if k in cfg and cfg[k] != v:
                 drift.append({"key": k, "defaults": v, "sdkconfig": cfg[k]})
             elif k not in cfg:
-                drift.append({"key": k, "defaults": v, "sdkconfig": "(fehlt – Option existiert evtl. nicht für dieses Target/diese IDF-Version)"})
+                drift.append({"key": k, "defaults": v, "sdkconfig": "(missing – option may not exist for this target/IDF version)"})
     return {
         "summary": summary,
         "findings": findings,
         "partition_csv_path": csv_path,
         "defaults_file": defaults_path,
         "defaults_drift": drift,
-        "hint": "Reproduzierbare Änderungen gehören in sdkconfig.defaults (ggf. sdkconfig.defaults.<target>); sdkconfig ist generiert.",
+        "hint": "Reproducible changes belong in sdkconfig.defaults (or sdkconfig.defaults.<target>); sdkconfig is generated.",
     }
 
 
@@ -152,5 +152,5 @@ def get(sdkconfig_path: str, keys: list[str]) -> dict:
             out[key] = cfg[key]
         else:
             matches = dict(list({ck: cv for ck, cv in cfg.items() if key[7:].upper() in ck}.items())[:30])
-            out[key] = matches if matches else "(nicht vorhanden)"
+            out[key] = matches if matches else "(not present)"
     return out

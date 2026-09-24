@@ -19,7 +19,7 @@ def test_analyze(tmp_path):
     r = sdkconfig.analyze(str(tmp_path / "sdkconfig"))
     assert r["summary"]["target"] == "esp32s3" and r["summary"]["flash_size"] == "8MB"
     msgs = " ".join(f["message"] for f in r["findings"])
-    for s in ("DEVELOPMENT", "Task-Watchdog", "100 Hz", "3072"):
+    for s in ("DEVELOPMENT", "Task watchdog", "100 Hz", "3072"):
         assert s in msgs
     assert r["partition_csv_path"].endswith("partitions.csv")
     assert r["defaults_drift"][0]["key"] == "CONFIG_FREERTOS_HZ"

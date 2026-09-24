@@ -1,4 +1,4 @@
-# sketch.yaml (arduino-cli ≥ 1.0) – reproduzierbarer Build mit gepinnten Versionen.
+# sketch.yaml (arduino-cli ≥ 1.0) – reproducible build with pinned versions.
 # Build:  arduino-cli compile --profile esp32c3
 # Upload: arduino-cli upload  --profile esp32c3 -p /dev/cu.usbmodem1101
 profiles:

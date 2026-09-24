@@ -1,4 +1,4 @@
-# ESP-IDF, 8 MB Flash, OTA mit Rollback, 1,5 MB Dateisystem.
+# ESP-IDF, 8 MB flash, OTA with rollback, 1.9 MB filesystem.
 # Name,    Type, SubType,  Offset,   Size
 nvs,       data, nvs,      0x9000,   0x5000
 otadata,   data, ota,      0xe000,   0x2000

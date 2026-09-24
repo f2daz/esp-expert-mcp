@@ -1,8 +1,8 @@
-# ESPHome-Gerätevorlage. Secrets in secrets.yaml (nicht einchecken).
-# Prüfen: MCP-Tools esphome_lint (statisch) und esphome_validate (esphome config).
+# ESPHome device template. Secrets go in secrets.yaml (do not commit it).
+# Check with the MCP tools esphome_lint (static) and esphome_validate (esphome config).
 substitutions:
-  name: sensor-kueche
-  friendly_name: Sensor Küche
+  name: kitchen-sensor
+  friendly_name: Kitchen Sensor
 
 esphome:
   name: ${name}
@@ -11,18 +11,18 @@ esphome:
 esp32:
   board: esp32-c3-devkitm-1
   framework:
-    type: esp-idf          # Standard seit ESPHome 2026.1; arduino nur für Arduino-only-Komponenten
+    type: esp-idf          # default since ESPHome 2026.1; use arduino only for Arduino-only components
 
 logger:
   level: INFO
 
 api:
   encryption:
-    key: !secret api_key   # erzeugen: `openssl rand -base64 32`
+    key: !secret api_key   # generate: `openssl rand -base64 32`
 
 ota:
   - platform: esphome
-    encryption:            # ab ESPHome 2026.9, nutzt den api-Schlüssel; ältere Versionen: password: !secret ota_password
+    encryption:            # ESPHome 2026.9+, reuses the api key; older versions: password: !secret ota_password
 
 wifi:
   ssid: !secret wifi_ssid
@@ -38,5 +38,5 @@ i2c:
 
 sensor:
   - platform: wifi_signal
-    name: WLAN-Signal
+    name: WiFi Signal
     update_interval: 60s

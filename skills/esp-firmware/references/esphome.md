@@ -1,74 +1,74 @@
 # ESPHome
 
-YAML-basierte Firmware für ESP32/ESP8266 (u. a.), eng mit Home Assistant verzahnt. ESPHome ändert Defaults häufig – installierte Version mit `esphome version` bzw. `framework_versions` klären, Konfiguration mit `esphome_lint` (statisch, inkl. Pinprüfung) und `esphome_validate` (echtes `esphome config`) prüfen.
+YAML-based firmware for ESP32/ESP8266 (among others), tightly integrated with Home Assistant. ESPHome changes defaults frequently – determine the installed version with `esphome version` or `framework_versions`, check the configuration with `esphome_lint` (static, incl. pin check) and `esphome_validate` (real `esphome config`).
 
 ## Installation
 
-- **Home Assistant:** als App/Add-on „ESPHome Device Builder“ (Einstellungen → Apps).
+- **Home Assistant:** as the app/add-on "ESPHome Device Builder" (Settings → Apps).
 - **Docker:**
   ```bash
   docker run --rm --net=host -v "${PWD}":/config -it ghcr.io/esphome/esphome
   ```
-  Web-Oberfläche unter `http://localhost:6052`.
-- **Python/pip** (ab ESPHome 2026.7: **Python ≥ 3.12**):
+  Web UI at `http://localhost:6052`.
+- **Python/pip** (from ESPHome 2026.7: **Python ≥ 3.12**):
   ```bash
-  pip install esphome                                  # nur CLI
-  pip install "esphome-device-builder[esphome]"        # mit Web-Oberfläche
-  esphome-device-builder config                        # Oberfläche starten (Konfig-Ordner)
+  pip install esphome                                  # CLI only
+  pip install "esphome-device-builder[esphome]"        # with web UI
+  esphome-device-builder config                        # start the UI (config folder)
   ```
-  Alternativ isoliert mit `pipx install esphome` oder `uv tool install esphome` bzw. einmalig `uvx esphome config geraet.yaml` (nicht in der offiziellen Doku genannt; `uvx` mit ESPHome 2026.9.0 getestet).
-- **Desktop-Apps** (Windows/macOS/Linux) mit eigener Python-Umgebung.
-- **Ab 2026.7:** das eingebaute Dashboard (`esphome dashboard`) ist entfernt → separates Paket `esphome-device-builder`. Docker/HA-Nutzer sind nicht betroffen.
+  Alternatively isolated with `pipx install esphome` or `uv tool install esphome`, or one-off with `uvx esphome config device.yaml` (not mentioned in the official docs; `uvx` tested with ESPHome 2026.9.0).
+- **Desktop apps** (Windows/macOS/Linux) with their own Python environment.
+- **From 2026.7:** the built-in dashboard (`esphome dashboard`) is removed → separate package `esphome-device-builder`. Docker/HA users are not affected.
 
 ## CLI
 
-| Befehl | Zweck |
+| Command | Purpose |
 |---|---|
-| `esphome wizard geraet.yaml` | Neue Konfiguration interaktiv anlegen |
-| `esphome config geraet.yaml` | Validieren, aufgelöste Konfig ausgeben (`--show-secrets` nur lokal) |
-| `esphome compile geraet.yaml` | Nur bauen |
-| `esphome upload geraet.yaml --device /dev/cu.usbserial-0001` | Letzten Build flashen (seriell oder OTA) – bestätigen lassen |
-| `esphome run geraet.yaml` | Validieren, bauen, flashen, Logs |
-| `esphome run geraet.yaml --device OTA --no-logs` | OTA ohne Logansicht |
-| `esphome logs geraet.yaml --device 192.168.1.50` | Logs per API bzw. seriell |
-| `esphome clean geraet.yaml` / `esphome clean-all` | Build-Dateien löschen (nach Framework-/Toolchain-Wechsel Pflicht) |
-| `esphome -s name wert compile geraet.yaml` | Substitution per CLI überschreiben |
+| `esphome wizard device.yaml` | Create a new configuration interactively |
+| `esphome config device.yaml` | Validate, print the resolved config (`--show-secrets` only locally) |
+| `esphome compile device.yaml` | Build only |
+| `esphome upload device.yaml --device /dev/cu.usbserial-0001` | Flash the last build (serial or OTA) – get confirmation |
+| `esphome run device.yaml` | Validate, build, flash, logs |
+| `esphome run device.yaml --device OTA --no-logs` | OTA without log view |
+| `esphome logs device.yaml --device 192.168.1.50` | Logs via API or serial |
+| `esphome clean device.yaml` / `esphome clean-all` | Delete build files (mandatory after a framework/toolchain change) |
+| `esphome -s name value compile device.yaml` | Override a substitution via CLI |
 
-`--device` akzeptiert seriellen Port, IP/Hostname oder `OTA`.
+`--device` accepts a serial port, IP/hostname or `OTA`.
 
-## Grundstruktur
+## Basic structure
 
 ```yaml
 substitutions:
-  name: sensor-keller
-  friendly_name: Sensor Keller
+  name: basement-sensor
+  friendly_name: Basement Sensor
 
 esphome:
   name: ${name}
   friendly_name: ${friendly_name}
 
 esp32:
-  variant: esp32c6          # oder board: esp32-c6-devkitc-1
+  variant: esp32c6          # or board: esp32-c6-devkitc-1
   flash_size: 4MB
   framework:
-    type: esp-idf           # ab 2026.1 Standard für ESP32
-  # toolchain: esp-idf      # ab 2026.7 Standard; platformio = Altverhalten (deprecated)
+    type: esp-idf           # default for ESP32 from 2026.1
+  # toolchain: esp-idf      # default from 2026.7; platformio = legacy behavior (deprecated)
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  ap:                       # Fallback-Hotspot
+  ap:                       # fallback hotspot
     password: !secret fallback_ap_password
 
 captive_portal:
 
 api:
   encryption:
-    key: !secret api_key    # 32 Byte, base64; `esphome wizard` erzeugt einen
+    key: !secret api_key    # 32 bytes, base64; `esphome wizard` generates one
 
 ota:
   - platform: esphome
-    encryption:             # ab 2026.9: ohne key → nutzt api-encryption-key
+    encryption:             # from 2026.9: without key → uses the api encryption key
 
 logger:
   level: DEBUG
@@ -79,64 +79,64 @@ ESP8266:
 ```yaml
 esp8266:
   board: d1_mini
-  restore_from_flash: false   # Flash-Verschleiß beachten
+  restore_from_flash: false   # mind flash wear
 ```
 
-`secrets.yaml` liegt neben den Gerätedateien und wird nicht eingecheckt.
+`secrets.yaml` sits next to the device files and is not checked in.
 
-### OTA-Absicherung
+### Securing OTA
 
-- **Ab ESPHome 2026.9:** `encryption:` unter `ota: - platform: esphome` verschlüsselt OTA mit demselben Noise-Protokoll wie die native API.
-  - Ohne `key` wird der `api:`-Encryption-Key verwendet.
-  - Ohne `api:`-Block eigenen Schlüssel setzen:
+- **From ESPHome 2026.9:** `encryption:` under `ota: - platform: esphome` encrypts OTA with the same Noise protocol as the native API.
+  - Without `key`, the `api:` encryption key is used.
+  - Without an `api:` block, set your own key:
     ```yaml
     ota:
       - platform: esphome
         encryption:
           key: !secret ota_key
     ```
-  - Nicht mit `password` kombinierbar. ESPHome empfiehlt `encryption` statt `password` (Validierung warnt; `password` kostet laut Warnung ca. 3,5 KB Flash).
-  - Geräte mit älterer Firmware verstehen das noch nicht: beim Umstieg zuerst eine Firmware ≥ 2026.9 aufspielen, dann auf `encryption` wechseln (genauen Übergangsweg per OTA prüfen; seriell geflashte Geräte können `encryption:` von Anfang an tragen).
-- **Variante für ESPHome < 2026.9:**
+  - Cannot be combined with `password`. ESPHome recommends `encryption` over `password` (validation warns; according to the warning, `password` costs about 3.5 KB of flash).
+  - Devices with older firmware do not understand this yet: when switching, first install firmware ≥ 2026.9, then switch to `encryption` (verify the exact transition path via OTA; serially flashed devices can carry `encryption:` from the start).
+- **Variant for ESPHome < 2026.9:**
   ```yaml
   ota:
     - platform: esphome
       password: !secret ota_password
   ```
-- Seit 2026.1: API-Passwort-Authentifizierung und OTA-MD5-Authentifizierung entfernt – nur noch `api: encryption` bzw. OTA-Passwort, ab 2026.9 OTA-Encryption.
-- OTA-Standardports: ESP32 3232, ESP8266 8266.
+- Since 2026.1: API password authentication and OTA MD5 authentication removed – only `api: encryption` or OTA password remain, and from 2026.9 OTA encryption.
+- Default OTA ports: ESP32 3232, ESP8266 8266.
 
-## Framework und Toolchain – Änderungen 2026
+## Framework and toolchain – changes in 2026
 
-| Version | Änderung | Folge |
+| Version | Change | Consequence |
 |---|---|---|
-| 2026.1 | **ESP-IDF ist Standard-Framework für ESP32** | Konfigs ohne `framework:` bauen mit IDF; Arduino nur mit `framework: type: arduino` |
-| 2026.1 | `custom_components`-Ordner deprecated | auf `external_components` umstellen |
-| 2026.2 | Ungenutzte ESP-IDF-Komponenten werden vom Build ausgeschlossen (kürzere Buildzeit) | Braucht eigener/externer Code eine IDF-Komponente: `esp32: framework: advanced: include_builtin_idf_components: [esp_http_client, …]` |
-| 2026.2 | Standard-Zertifikatsbundle auf CMN-Variante verkleinert | bei TLS-Fehlern zu exotischen CAs prüfen |
-| 2026.7 | **Native ESP-IDF-Toolchain ist Standard** (statt PlatformIO) | Altverhalten mit `esp32: toolchain: platformio` (deprecated, Entfernung laut Doku 2027.2) |
-| 2026.7 | `packages: !include datei.yaml` ungültig | Listen-Syntax: `packages: [!include datei.yaml]` |
-| 2026.7 | Python ≥ 3.12, Dashboard → `esphome-device-builder` | pip-Installationen aktualisieren |
-| 2026.9 | OTA-Encryption | siehe oben |
+| 2026.1 | **ESP-IDF is the default framework for ESP32** | Configs without `framework:` build with IDF; Arduino only with `framework: type: arduino` |
+| 2026.1 | `custom_components` folder deprecated | switch to `external_components` |
+| 2026.2 | Unused ESP-IDF components are excluded from the build (shorter build time) | If your own/external code needs an IDF component: `esp32: framework: advanced: include_builtin_idf_components: [esp_http_client, …]` |
+| 2026.2 | Default certificate bundle reduced to the CMN variant | check for TLS errors with exotic CAs |
+| 2026.7 | **Native ESP-IDF toolchain is the default** (instead of PlatformIO) | Legacy behavior with `esp32: toolchain: platformio` (deprecated, removal in 2027.2 according to the docs) |
+| 2026.7 | `packages: !include file.yaml` invalid | List syntax: `packages: [!include file.yaml]` |
+| 2026.7 | Python ≥ 3.12, dashboard → `esphome-device-builder` | update pip installations |
+| 2026.9 | OTA encryption | see above |
 
-Aktuellen Stand und weitere Breaking Changes immer im Changelog der installierten Version prüfen (https://esphome.io/changelog/). 2026.9 enthält u. a. Breaking Changes bei `modbus_controller` (`custom_command` → `custom_pdu`).
+Always check the current status and further breaking changes in the changelog of the installed version (https://esphome.io/changelog/). 2026.9 includes, among others, breaking changes in `modbus_controller` (`custom_command` → `custom_pdu`).
 
-### Arduino-only-Komponenten und Ersatz
+### Arduino-only components and replacements
 
-| Arduino-only | Ersatz unter ESP-IDF |
+| Arduino-only | Replacement under ESP-IDF |
 |---|---|
 | `neopixelbus`, `fastled_clockless` | `esp32_rmt_led_strip` |
 | `fastled_spi` | `spi_led_strip` |
 | `bme680_bsec` | `bme68x_bsec2` |
-| `heatpumpir`, `midea`, WLED-Effekt | kein Ersatz → `framework: type: arduino` beibehalten |
+| `heatpumpir`, `midea`, WLED effect | no replacement → keep `framework: type: arduino` |
 
-Arduino unter ESPHome läuft als Komponente auf ESP-IDF: längere Buildzeiten, mehr Speicher. Migrationsschritte: `esphome clean`, `framework: type: esp-idf`, Meldungen zu inkompatiblen Komponenten abarbeiten, neu bauen, auf Hardware testen.
+Arduino under ESPHome runs as a component on ESP-IDF: longer build times, more memory. Migration steps: `esphome clean`, `framework: type: esp-idf`, work through messages about incompatible components, rebuild, test on hardware.
 
-## Strukturierung
+## Structuring
 
-**Substitutions** – `${name}`; per CLI mit `-s` überschreibbar.
+**Substitutions** – `${name}`; can be overridden via CLI with `-s`.
 
-**Packages** (ab 2026.7 Listen-Syntax für `!include`):
+**Packages** (from 2026.7 list syntax for `!include`):
 ```yaml
 packages:
   - !include common/base.yaml
@@ -144,18 +144,18 @@ packages:
     file: common/relay.yaml
     vars:
       relay_pin: GPIO4
-  - github://org/esphome-configs/common/wifi.yaml@v1.2.0   # Ref pinnen
+  - github://org/esphome-configs/common/wifi.yaml@v1.2.0   # pin the ref
 ```
-Zusammenführung: Dicts schlüsselweise, Komponentenlisten nach `id`, spätere Werte gewinnen. Anpassen mit `!extend <id>`, entfernen mit `!remove`.
+Merging: dicts key by key, component lists by `id`, later values win. Adjust with `!extend <id>`, remove with `!remove`.
 
-**!include** für einzelne Blöcke: `sensor: !include sensors.yaml`.
+**!include** for individual blocks: `sensor: !include sensors.yaml`.
 
-**External Components:**
+**External components:**
 ```yaml
 external_components:
   - source: github://org/esphome-components@v0.3.1
     components: [my_sensor]
-    refresh: never           # bei Tag-Referenz
+    refresh: never           # with a tag reference
   - source:
       type: local
       path: my_components     # components/<name>/__init__.py
@@ -171,51 +171,51 @@ sensor:
     attenuation: 12db
     update_interval: 30s
     filters:
-      - lambda: return x * 2.0;          # Spannungsteiler 1:1
+      - lambda: return x * 2.0;          # 1:1 voltage divider
 
 binary_sensor:
   - platform: template
-    name: "Akku schwach"
+    name: "Battery low"
     lambda: |-
       if (isnan(id(vbat).state)) return {};
       return id(vbat).state < 3.3;
 ```
-- Zugriff auf andere Komponenten über `id(...)`; Zustand über `.state`.
-- Logging: `ESP_LOGD("tag", "Wert: %.2f", x);`
-- Lambdas laufen in der Hauptschleife: nichts Blockierendes (kein `delay()` über wenige ms), sonst Watchdog/API-Abbrüche. Für Wartezeiten `delay:`-Aktion in Automationen.
-- Gemeinsamer Zustand über `globals:` statt statischer Variablen.
+- Access other components via `id(...)`; state via `.state`.
+- Logging: `ESP_LOGD("tag", "Value: %.2f", x);`
+- Lambdas run in the main loop: nothing blocking (no `delay()` beyond a few ms), otherwise watchdog/API disconnects. For waits, use the `delay:` action in automations.
+- Shared state via `globals:` instead of static variables.
 
 ## Debugging
 
-- `logger: level: VERBOSE` (bzw. `VERY_VERBOSE`) temporär; einzelne Komponenten dämpfen mit `logs: { component: WARN }`.
-- Serielle Logs deaktiviert/umgeleitet: `logger: baud_rate: 0` gibt UART frei – dann nur Logs über API.
-- `debug:`-Komponente:
+- `logger: level: VERBOSE` (or `VERY_VERBOSE`) temporarily; quiet individual components with `logs: { component: WARN }`.
+- Serial logs disabled/redirected: `logger: baud_rate: 0` frees the UART – then logs only via API.
+- `debug:` component:
   ```yaml
   debug:
     update_interval: 30s
   text_sensor:
     - platform: debug
       reset_reason:
-        name: "Reset-Grund"
+        name: "Reset reason"
   sensor:
     - platform: debug
       free:
-        name: "Heap frei"
+        name: "Heap free"
       block:
-        name: "Heap größter Block"
+        name: "Heap largest block"
       loop_time:
-        name: "Loop-Zeit"
+        name: "Loop time"
   ```
-- Crash-Backtraces aus `esphome logs` mit `serial_log_analyze` und der ELF aus `.esphome/build/<name>/` auswerten (Pfad je Toolchain prüfen).
-- „Component took a long time for an operation“ → blockierender Code in Lambda/Komponente.
+- Analyze crash backtraces from `esphome logs` with `serial_log_analyze` and the ELF from `.esphome/build/<name>/` (verify the path per toolchain).
+- "Component took a long time for an operation" → blocking code in a lambda/component.
 
-## Pinprüfung
+## Pin check
 
-- Vor Hardware-Änderungen `esphome_lint` laufen lassen: erkennt Strapping-Pins, Flash-/PSRAM-Pins, ADC2 bei aktivem Wi-Fi, doppelt belegte Pins. Danach `esphome_validate`.
-- Bewusste Mehrfachnutzung eines Pins: `allow_other_uses: true` am Pin-Schema (prüfen, je Komponente).
-- Strapping-Pin-Warnungen nicht pauschal ignorieren – Beschaltung beim Booten klären (`pin_check`).
+- Run `esphome_lint` before hardware changes: detects strapping pins, flash/PSRAM pins, ADC2 with Wi-Fi active, pins assigned twice. Then `esphome_validate`.
+- Intentional multiple use of a pin: `allow_other_uses: true` on the pin schema (verify, per component).
+- Do not blanket-ignore strapping pin warnings – clarify the circuitry at boot (`pin_check`).
 
-## Quellen
+## Sources
 
 - https://esphome.io/install/
 - https://esphome.io/install/getting-started/

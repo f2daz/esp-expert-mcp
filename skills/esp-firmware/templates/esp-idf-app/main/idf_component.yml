@@ -1,5 +1,5 @@
-# Abhängigkeiten aus der ESP Component Registry (components.espressif.com).
-# Versionen pinnen; aktuelle Stände mit `idf.py add-dependency "<name>^x.y"` eintragen lassen.
+# Dependencies from the ESP Component Registry (components.espressif.com).
+# Pin versions; let `idf.py add-dependency "<name>^x.y"` add current ones.
 dependencies:
   idf: ">=5.3"
   # espressif/led_strip: "^3"

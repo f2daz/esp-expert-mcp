@@ -1,7 +1,7 @@
-"""Live-Abfrage aktueller Framework-/Tool-Versionen (GitHub-Releases, Espressif-Index).
+"""Live query of current framework/tool versions (GitHub releases, Espressif index).
 
-Nichts ist hart kodiert: Versionen ändern sich monatlich. Ergebnisse werden eine
-Stunde im Prozess gecacht. GITHUB_TOKEN (optional) hebt das Rate-Limit an.
+Nothing is hard-coded: versions change monthly. Results are cached in-process for
+one hour. GITHUB_TOKEN (optional) raises the rate limit.
 """
 
 from __future__ import annotations
@@ -51,17 +51,17 @@ def _semver_key(tag: str) -> tuple:
 def releases(component: str, include_prerelease: bool = False, limit: int = 30) -> dict:
     repo = REPOS.get(component, component if "/" in component else None)
     if not repo:
-        return {"error": f"Unbekannte Komponente {component!r}. Bekannt: {sorted(REPOS)} oder 'owner/repo'."}
+        return {"error": f"Unknown component {component!r}. Known: {sorted(REPOS)} or 'owner/repo'."}
     try:
         data = _get(f"https://api.github.com/repos/{repo}/releases?per_page={limit}")
     except OSError as e:
-        return {"error": f"GitHub nicht erreichbar: {e}"}
+        return {"error": f"GitHub unreachable: {e}"}
     rels = [
         {"tag": r["tag_name"], "published": r["published_at"][:10], "prerelease": r["prerelease"], "url": r["html_url"]}
         for r in data if not r.get("draft") and (include_prerelease or not r["prerelease"])
     ]
     by_version = sorted(rels, key=lambda r: _semver_key(r["tag"]), reverse=True)
-    # Neuestes Release je Minor-Linie (z. B. v6.1, v6.0.3, v5.5.5 …)
+    # Latest release per minor line (e.g. v6.1, v6.0.3, v5.5.5 …)
     lines: dict[str, dict] = {}
     for r in by_version:
         k = ".".join(str(x) for x in _semver_key(r["tag"])[:2])
@@ -71,8 +71,8 @@ def releases(component: str, include_prerelease: bool = False, limit: int = 30) 
         "highest_version": by_version[0] if by_version else None,
         "latest_per_minor": list(lines.values()),
         "most_recently_published": max(rels, key=lambda r: r["published"]) if rels else None,
-        "note": "‘most_recently_published’ kann ein Bugfix-Release eines alten Zweigs sein – für Neuprojekte ‘highest_version’ "
-                "bzw. die empfohlene Version des Frameworks nehmen.",
+        "note": "‘most_recently_published’ may be a bugfix release of an old branch – for new projects use ‘highest_version’ "
+                "or the framework's recommended version.",
         "source": f"https://github.com/{repo}/releases",
     }
 
@@ -81,7 +81,7 @@ def idf_targets(target: str | None = None) -> dict:
     try:
         data = _get(IDF_INDEX)
     except OSError as e:
-        return {"error": f"Espressif-Index nicht erreichbar: {e}"}
+        return {"error": f"Espressif index unreachable: {e}"}
     rows = []
     for v in data.get("VERSIONS", []):
         if "name" not in v or v.get("end_of_life"):
@@ -101,7 +101,7 @@ def overview() -> dict:
         out[comp] = r.get("highest_version") or r.get("error")
         if comp == "esp-idf" and "latest_per_minor" in r:
             out["esp-idf-lines"] = [x["tag"] for x in r["latest_per_minor"][:6]]
-    out["hinweis"] = ("Arduino-Core-Basis (welche ESP-IDF-Version) steht in den Release-Notes von arduino-esp32. "
-                      "PlatformIO: Arduino-Core 3.x wird über die Community-Plattform pioarduino bereitgestellt – "
-                      "Stand vor Nutzung in deren Doku prüfen.")
+    out["note"] = ("The ESP-IDF version underlying the Arduino core is listed in the arduino-esp32 release notes. "
+                   "PlatformIO: Arduino core 3.x is provided via the community platform pioarduino – "
+                   "check its docs for the current status before use.")
     return out

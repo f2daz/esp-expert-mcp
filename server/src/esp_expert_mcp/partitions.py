@@ -1,8 +1,8 @@
-"""Parser und Validator für ESP-IDF-Partitionstabellen (CSV).
+"""Parser and validator for ESP-IDF partition tables (CSV).
 
-Die Regeln folgen der ESP-IDF-Doku "Partition Tables" und dem Verhalten von
-gen_esp32part.py: App-Partitionen 64-KB-ausgerichtet, Datenpartitionen 4 KB,
-fehlende Offsets werden fortlaufend vergeben.
+The rules follow the ESP-IDF docs "Partition Tables" and the behavior of
+gen_esp32part.py: app partitions 64 KB aligned, data partitions 4 KB,
+missing offsets are assigned sequentially.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ DATA_ALIGN = 0x1000
 PARTITION_TABLE_SIZE = 0x1000
 DEFAULT_TABLE_OFFSET = 0x8000
 
-# Offset des Second-Stage-Bootloaders je Target (ESP-IDF, CONFIG_BOOTLOADER_OFFSET_IN_FLASH).
+# Second-stage bootloader offset per target (ESP-IDF, CONFIG_BOOTLOADER_OFFSET_IN_FLASH).
 BOOTLOADER_OFFSET = {
     "esp32": 0x1000,
     "esp32s2": 0x1000,
@@ -67,7 +67,7 @@ def parse_size(text: str) -> int:
     t = text.strip().upper()
     m = re.fullmatch(r"(0X[0-9A-F]+|\d+)\s*([KM]?)", t)
     if not m:
-        raise ValueError(f"Ungültiger Größen-/Offsetwert: {text!r}")
+        raise ValueError(f"Invalid size/offset value: {text!r}")
     num, unit = m.groups()
     value = int(num, 16) if num.startswith("0X") else int(num)
     return value * {"": 1, "K": 1024, "M": 1024 * 1024}[unit]
@@ -88,7 +88,7 @@ def validate(
     table_offset: str | None = None,
     app_bin_size: int | None = None,
 ) -> dict:
-    """Parst die CSV, vergibt Auto-Offsets und prüft Layout-Regeln."""
+    """Parses the CSV, assigns automatic offsets and checks layout rules."""
     errors: list[str] = []
     warnings: list[str] = []
     info: list[str] = []
@@ -108,14 +108,14 @@ def validate(
         cols = [c.strip() for c in cols] + [""] * (6 - len(cols))
         name, ptype, subtype, off_s, size_s, flags_s = cols[:6]
         if not name or not ptype or not size_s:
-            errors.append(f"Zeile {lineno}: Name, Type und Size sind Pflicht.")
+            errors.append(f"Line {lineno}: Name, Type and Size are required.")
             continue
         ptype_l = ptype.lower()
         subtype_l = subtype.lower()
         try:
             size = parse_size(size_s)
         except ValueError as e:
-            errors.append(f"Zeile {lineno}: {e}")
+            errors.append(f"Line {lineno}: {e}")
             continue
 
         is_app = ptype_l in ("app", "0x00", "0")
@@ -127,90 +127,90 @@ def validate(
             try:
                 offset = parse_size(off_s)
             except ValueError as e:
-                errors.append(f"Zeile {lineno}: {e}")
+                errors.append(f"Line {lineno}: {e}")
                 continue
         flags = [f.strip().lower() for f in flags_s.split(":") if f.strip()] if flags_s else []
         p = Partition(name, ptype_l, subtype_l, offset, size, flags, lineno, auto)
         parts.append(p)
         cursor = p.end
 
-        # --- Einzelprüfungen ---
+        # --- Per-partition checks ---
         if len(name) > 16:
-            errors.append(f"{name}: Name länger als 16 Zeichen.")
+            errors.append(f"{name}: name longer than 16 characters.")
         if ptype_l == "app":
             if subtype_l not in APP_SUBTYPES:
-                errors.append(f"{name}: unbekannter App-Subtype {subtype!r}.")
+                errors.append(f"{name}: unknown app subtype {subtype!r}.")
         elif ptype_l == "data":
             if subtype_l not in DATA_SUBTYPES and not subtype_l.startswith("0x"):
-                warnings.append(f"{name}: unbekannter Data-Subtype {subtype!r} (nur zulässig als Hex-Wert oder bei neuerem ESP-IDF).")
+                warnings.append(f"{name}: unknown data subtype {subtype!r} (only valid as a hex value or with a newer ESP-IDF).")
         elif ptype_l.startswith("0x"):
             val = int(ptype_l, 16)
             if not 0x40 <= val <= 0xFE:
-                warnings.append(f"{name}: benutzerdefinierter Type {ptype} liegt außerhalb 0x40–0xFE.")
+                warnings.append(f"{name}: custom type {ptype} is outside 0x40–0xFE.")
         elif ptype_l in ("bootloader", "partition_table"):
-            info.append(f"{name}: Type {ptype_l} erfordert ESP-IDF ≥ 5.3.")
+            info.append(f"{name}: type {ptype_l} requires ESP-IDF ≥ 5.3.")
         else:
-            errors.append(f"{name}: unbekannter Type {ptype!r}.")
+            errors.append(f"{name}: unknown type {ptype!r}.")
 
         if offset % align:
-            errors.append(f"{name}: Offset {hex(offset)} ist nicht auf {hex(align)} ausgerichtet"
-                          f" ({'App' if is_app else 'Data'}-Partition).")
+            errors.append(f"{name}: offset {hex(offset)} is not aligned to {hex(align)}"
+                          f" ({'app' if is_app else 'data'} partition).")
         if is_app and size % APP_ALIGN:
-            warnings.append(f"{name}: App-Größe {hex(size)} ist kein Vielfaches von 64 KB.")
+            warnings.append(f"{name}: app size {hex(size)} is not a multiple of 64 KB.")
         if not is_app and size % DATA_ALIGN:
-            errors.append(f"{name}: Größe {hex(size)} ist kein Vielfaches von 4 KB.")
+            errors.append(f"{name}: size {hex(size)} is not a multiple of 4 KB.")
         if offset < tbl_off + PARTITION_TABLE_SIZE:
-            errors.append(f"{name}: Offset {hex(offset)} überlappt Bootloader/Partitionstabelle"
-                          f" (Tabelle bei {hex(tbl_off)}–{hex(tbl_off + PARTITION_TABLE_SIZE)}).")
+            errors.append(f"{name}: offset {hex(offset)} overlaps bootloader/partition table"
+                          f" (table at {hex(tbl_off)}–{hex(tbl_off + PARTITION_TABLE_SIZE)}).")
         for f in flags:
             if f not in KNOWN_FLAGS:
-                warnings.append(f"{name}: unbekanntes Flag {f!r}.")
+                warnings.append(f"{name}: unknown flag {f!r}.")
         if subtype_l == "otadata" or (ptype_l == "data" and subtype_l == "ota"):
             if size != 0x2000:
-                errors.append(f"{name}: otadata muss genau 0x2000 (8 KB) groß sein, ist {hex(size)}.")
+                errors.append(f"{name}: otadata must be exactly 0x2000 (8 KB), is {hex(size)}.")
         if ptype_l == "data" and subtype_l == "nvs" and size < 0x3000:
-            errors.append(f"{name}: NVS-Partition kleiner als 0x3000 (12 KB) ist nicht nutzbar.")
+            errors.append(f"{name}: an NVS partition smaller than 0x3000 (12 KB) is unusable.")
         if ptype_l == "data" and subtype_l == "nvs_keys" and "encrypted" not in flags:
-            warnings.append(f"{name}: nvs_keys sollte das Flag 'encrypted' tragen.")
+            warnings.append(f"{name}: nvs_keys should have the 'encrypted' flag.")
 
-    # --- Globale Prüfungen ---
+    # --- Global checks ---
     ordered = sorted(parts, key=lambda p: p.offset)
     for a, b in zip(ordered, ordered[1:]):
         if b.offset < a.end:
-            errors.append(f"Überlappung: {a.name} ({hex(a.offset)}–{hex(a.end)}) und {b.name} ({hex(b.offset)}).")
+            errors.append(f"Overlap: {a.name} ({hex(a.offset)}–{hex(a.end)}) and {b.name} ({hex(b.offset)}).")
     names = [p.name for p in parts]
     for n in {n for n in names if names.count(n) > 1}:
-        errors.append(f"Name {n!r} ist doppelt vergeben.")
+        errors.append(f"Name {n!r} is used more than once.")
 
     apps = [p for p in parts if _is_app(p)]
     ota_slots = [p for p in apps if p.subtype.startswith("ota_")]
     has_otadata = any(p.type == "data" and p.subtype == "ota" for p in parts)
     if not apps:
-        errors.append("Keine App-Partition vorhanden.")
+        errors.append("No app partition present.")
     if ota_slots and not has_otadata:
-        errors.append("OTA-Slots vorhanden, aber keine otadata-Partition (data, ota).")
+        errors.append("OTA slots present but no otadata partition (data, ota).")
     if has_otadata and len(ota_slots) < 2:
-        warnings.append("otadata vorhanden, aber weniger als zwei OTA-Slots – OTA mit Rollback braucht ota_0 und ota_1.")
+        warnings.append("otadata present but fewer than two OTA slots – OTA with rollback needs ota_0 and ota_1.")
     if len({p.size for p in ota_slots}) > 1:
-        warnings.append("OTA-Slots sind unterschiedlich groß – das kleinste Slot begrenzt jedes Update.")
+        warnings.append("OTA slots differ in size – the smallest slot limits every update.")
     if not any(p.subtype == "nvs" for p in parts):
-        warnings.append("Keine NVS-Partition – Wi-Fi/BLE und Preferences benötigen NVS.")
+        warnings.append("No NVS partition – Wi-Fi/BLE and Preferences require NVS.")
     if not any(p.subtype == "phy" for p in parts):
-        info.append("Keine phy_init-Partition – nur relevant bei CONFIG_ESP_PHY_INIT_DATA_IN_PARTITION.")
+        info.append("No phy_init partition – only relevant with CONFIG_ESP_PHY_INIT_DATA_IN_PARTITION.")
 
     if target:
         t = target.lower().replace("-", "")
         bl = BOOTLOADER_OFFSET.get(t)
         if bl is None:
-            info.append(f"Bootloader-Offset für Target {target!r} unbekannt – bitte in ESP-IDF-Doku prüfen.")
+            info.append(f"Bootloader offset for target {target!r} unknown – check the ESP-IDF docs.")
         else:
             space = tbl_off - bl
             if space <= 0:
-                errors.append(f"Partitionstabelle ({hex(tbl_off)}) liegt vor/auf dem Bootloader-Offset {hex(bl)}.")
-            info.append(f"Bootloader bei {hex(bl)}, Platz bis zur Tabelle: {space // 1024} KB.")
+                errors.append(f"Partition table ({hex(tbl_off)}) is located at or before the bootloader offset {hex(bl)}.")
+            info.append(f"Bootloader at {hex(bl)}, space up to the table: {space // 1024} KB.")
             if tbl_off == DEFAULT_TABLE_OFFSET:
-                info.append("Tabellenoffset ist Standard (0x8000). Bei großem Bootloader (Secure Boot, Debug-Log) "
-                            "CONFIG_PARTITION_TABLE_OFFSET erhöhen, z. B. auf 0x10000.")
+                info.append("Table offset is the default (0x8000). For a large bootloader (Secure Boot, debug log) "
+                            "increase CONFIG_PARTITION_TABLE_OFFSET, e.g. to 0x10000.")
 
     flash_bytes = None
     if flash_size:
@@ -221,23 +221,23 @@ def validate(
     if flash_bytes and parts:
         last_end = max(p.end for p in parts)
         if last_end > flash_bytes:
-            errors.append(f"Partitionen enden bei {hex(last_end)} – größer als Flash ({flash_size}).")
+            errors.append(f"Partitions end at {hex(last_end)} – larger than flash ({flash_size}).")
         else:
             free = flash_bytes - last_end
             if free >= 0x40000:
-                info.append(f"{free // 1024} KB am Flash-Ende ungenutzt – bewusst so gewollt? "
-                            "Sonst App-Slots oder Datenpartition vergrößern.")
+                info.append(f"{free // 1024} KB unused at the end of flash – intentional? "
+                            "Otherwise enlarge the app slots or a data partition.")
 
     if app_bin_size and apps:
         smallest = min(p.size for p in apps)
         headroom = smallest - app_bin_size
         pct = headroom / smallest * 100
         if headroom < 0:
-            errors.append(f"App-Binary ({app_bin_size} B) passt nicht in die kleinste App-Partition ({smallest} B).")
+            errors.append(f"App binary ({app_bin_size} B) does not fit into the smallest app partition ({smallest} B).")
         elif pct < 10:
-            warnings.append(f"Nur {pct:.1f} % Reserve in der kleinsten App-Partition ({headroom // 1024} KB).")
+            warnings.append(f"Only {pct:.1f} % headroom in the smallest app partition ({headroom // 1024} KB).")
         else:
-            info.append(f"Reserve in der kleinsten App-Partition: {pct:.1f} % ({headroom // 1024} KB).")
+            info.append(f"Headroom in the smallest app partition: {pct:.1f} % ({headroom // 1024} KB).")
 
     return {
         "valid": not errors,

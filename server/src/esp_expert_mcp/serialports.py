@@ -1,4 +1,4 @@
-"""Serielle Ports erkennen und (nur lesend) per esptool identifizieren."""
+"""Detect serial ports and identify them (read-only) via esptool."""
 
 from __future__ import annotations
 
@@ -8,16 +8,16 @@ import subprocess
 
 from serial.tools import list_ports
 
-# VID:PID → Bridge-Chip. Nur gesicherte Zuordnungen; Rest wird als "unbekannt" gemeldet.
+# VID:PID → bridge chip. Only confirmed mappings; everything else is reported as "unknown".
 USB_BRIDGES = {
     (0x10C4, 0xEA60): "Silicon Labs CP210x",
     (0x1A86, 0x7523): "WCH CH340/CH341",
     (0x1A86, 0x55D4): "WCH CH9102",
     (0x0403, 0x6001): "FTDI FT232R",
-    (0x0403, 0x6010): "FTDI FT2232 (z. B. ESP-Prog: Kanal A = JTAG, Kanal B = UART)",
+    (0x0403, 0x6010): "FTDI FT2232 (e.g. ESP-Prog: channel A = JTAG, channel B = UART)",
     (0x0403, 0x6015): "FTDI FT231X",
     (0x067B, 0x2303): "Prolific PL2303",
-    (0x303A, 0x1001): "Espressif USB-Serial/JTAG (native USB von ESP32-C3/C6/H2/S3/…)",
+    (0x303A, 0x1001): "Espressif USB-Serial/JTAG (native USB of ESP32-C3/C6/H2/S3/…)",
 }
 ESPRESSIF_VID = 0x303A
 
@@ -35,17 +35,17 @@ def list_serial() -> dict:
         if p.vid is not None:
             bridge = USB_BRIDGES.get((p.vid, p.pid))
             if not bridge and p.vid == ESPRESSIF_VID:
-                bridge = f"Espressif native USB (PID {p.pid:04X}) – z. B. TinyUSB-CDC oder ROM-Download-Modus"
-            entry["bridge"] = bridge or "unbekannt"
+                bridge = f"Espressif native USB (PID {p.pid:04X}) – e.g. TinyUSB CDC or ROM download mode"
+            entry["bridge"] = bridge or "unknown"
             entry["likely_esp"] = bridge is not None
         ports.append(entry)
-    # macOS listet jedes Gerät als /dev/tty.* und /dev/cu.* – cu.* ist für esptool/Monitor richtig.
+    # macOS lists every device as /dev/tty.* and /dev/cu.* – cu.* is correct for esptool/monitor.
     notes = []
     if any(p["device"].startswith("/dev/tty.") for p in ports):
-        notes.append("macOS: für esptool/Monitor /dev/cu.* statt /dev/tty.* verwenden.")
+        notes.append("macOS: use /dev/cu.* instead of /dev/tty.* for esptool/monitor.")
     if not any(p.get("likely_esp") for p in ports):
-        notes.append("Kein bekannter ESP-USB-Bridge gefunden. Datenkabel (nicht nur Ladekabel)? Treiber (CH340/CP210x) installiert? "
-                     "Linux: Benutzer in Gruppe dialout/uucp.")
+        notes.append("No known ESP USB bridge found. Data cable (not a charge-only cable)? Driver (CH340/CP210x) installed? "
+                     "Linux: user in group dialout/uucp?")
     return {"ports": [p for p in ports if not p["device"].startswith("/dev/tty.")] or ports, "notes": notes}
 
 
@@ -57,10 +57,10 @@ def _esptool_cmd() -> list[str] | None:
 
 
 def probe(port: str, baud: int = 115200) -> dict:
-    """Liest Chip-Typ, Revision, Features, MAC und Flash-Größe. Schreibt nichts, setzt den Chip aber zurück."""
+    """Reads chip type, revision, features, MAC and flash size. Writes nothing, but resets the chip."""
     cmd = _esptool_cmd()
     if not cmd:
-        return {"error": "esptool nicht gefunden. Installieren: 'pipx install esptool' oder 'uv tool install esptool'."}
+        return {"error": "esptool not found. Install: 'pipx install esptool' or 'uv tool install esptool'."}
     out = {}
     for sub in (("flash-id", "flash_id"),):
         text = ""
@@ -69,7 +69,7 @@ def probe(port: str, baud: int = 115200) -> dict:
                 r = subprocess.run([*cmd, "--port", port, "--baud", str(baud), variant],
                                    capture_output=True, text=True, timeout=60)
             except subprocess.TimeoutExpired:
-                return {"error": "Zeitüberschreitung – Board im Download-Modus? (BOOT halten, EN kurz drücken)"}
+                return {"error": "Timeout – is the board in download mode? (hold BOOT, briefly press EN)"}
             text = r.stdout + r.stderr
             if "invalid choice" not in text and "No such command" not in text:
                 break
@@ -90,9 +90,9 @@ def probe(port: str, baud: int = 115200) -> dict:
         if m:
             out[key] = next((g for g in m.groups() if g), m.group(0)).strip()
     if "Failed to connect" in t or "Timed out waiting for packet header" in t:
-        out["hint"] = ("Keine Verbindung: Download-Modus manuell erzwingen (BOOT/IO0 halten, EN/RST kurz drücken), "
-                       "anderes Kabel/Port, Monitor schließen, --baud 115200. Bei native USB nach Reset neuen Port suchen.")
+        out["hint"] = ("No connection: force download mode manually (hold BOOT/IO0, briefly press EN/RST), "
+                       "try another cable/port, close the monitor, --baud 115200. With native USB, look for a new port after reset.")
     if "Permission denied" in t or "could not open port" in t:
-        out["hint"] = "Port belegt (Monitor offen?) oder fehlende Rechte (Linux: dialout-Gruppe)."
-    out["note"] = "Der Chip wurde für die Abfrage zurückgesetzt; es wurde nichts geschrieben."
+        out["hint"] = "Port busy (monitor open?) or missing permissions (Linux: dialout group)."
+    out["note"] = "The chip was reset for the query; nothing was written."
     return out

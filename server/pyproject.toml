@@ -1,7 +1,7 @@
 [project]
 name = "esp-expert-mcp"
 version = "0.1.0"
-description = "MCP-Server für ESP32/ESP8266-Firmwareentwicklung: Pin-Prüfung, Partitionstabellen, Panic-Decoder, sdkconfig, Serial-Ports, Live-Versionen, ESPHome-Lint."
+description = "MCP server for ESP32/ESP8266 firmware development: pin checks, partition tables, panic decoder, sdkconfig, serial ports, live versions, ESPHome lint."
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["../LICENSE"]

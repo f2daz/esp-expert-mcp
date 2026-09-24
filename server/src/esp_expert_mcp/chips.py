@@ -1,4 +1,4 @@
-"""Chip-Stammdaten (data/chips.json, aus Espressif-Datenblättern/ESP-IDF-Doku) und Pin-Prüfung."""
+"""Chip reference data (data/chips.json, from Espressif datasheets/ESP-IDF docs) and pin checks."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ ALIASES = {
     "esp32-wroom-32": "esp32", "esp32-wrover": "esp32",
 }
 
-# Wemos D1 mini / NodeMCU v2 Pin-Beschriftungen → GPIO
+# Wemos D1 mini / NodeMCU v2 pin labels → GPIO
 ESP8266_BOARD_PINS = {"D0": 16, "D1": 5, "D2": 4, "D3": 0, "D4": 2, "D5": 14, "D6": 12, "D7": 13, "D8": 15,
                       "RX": 3, "TX": 1, "SD2": 9, "SD3": 10, "A0": 17}
 
@@ -42,7 +42,7 @@ def chip_info(chip: str | None = None) -> dict:
                 "meta": data.get("_meta")}
     c = normalize_chip(chip)
     if c not in data:
-        return {"error": f"Unbekannter Chip {chip!r}. Bekannt: {[k for k in data if not k.startswith('_')]}"}
+        return {"error": f"Unknown chip {chip!r}. Known: {[k for k in data if not k.startswith('_')]}"}
     return {c: data[c], "meta": data.get("_meta")}
 
 
@@ -72,7 +72,7 @@ def check_pins(chip: str, pins: list[dict], uses_wifi: bool = True, psram: str |
     c = normalize_chip(chip)
     data = load()
     if c not in data:
-        return {"error": f"Unbekannter Chip {chip!r}."}
+        return {"error": f"Unknown chip {chip!r}."}
     info = data[c]
     lo, hi = info.get("gpio_range") or [0, 0]
     missing = set(info.get("gpio_missing") or [])
@@ -99,42 +99,42 @@ def check_pins(chip: str, pins: list[dict], uses_wifi: bool = True, psram: str |
             issues.append({"level": level, "message": msg})
 
         if g is None:
-            add("error", f"Pin {raw!r} nicht als GPIO lesbar (Port-Expander-Pins bitte separat prüfen).")
+            add("error", f"Pin {raw!r} cannot be parsed as a GPIO (check port-expander pins separately).")
             results.append({"gpio": raw, "label": label, "issues": issues})
             continue
         if c == "esp8266" and g == 17:
             if usage not in ("adc", "analog", "input"):
-                add("error", "A0/TOUT ist ausschließlich ADC-Eingang.")
+                add("error", "A0/TOUT is an ADC input only.")
             else:
-                add("info", "A0/TOUT: Chip-Eingang 0–1,0 V; viele Boards haben einen Spannungsteiler auf 3,3 V – Board prüfen.")
+                add("info", "A0/TOUT: chip input range 0–1.0 V; many boards add a voltage divider for 3.3 V – check the board.")
         elif g < lo or g > hi or g in missing:
-            add("error", f"GPIO{g} existiert auf {info.get('name', c)} nicht.")
+            add("error", f"GPIO{g} does not exist on {info.get('name', c)}.")
         if g in flash:
-            add("error", f"GPIO{g}: {flash[g]} – nicht verwenden.")
+            add("error", f"GPIO{g}: {flash[g]} – do not use.")
         if g in octal and _psram_blocks(c, psram):
             add("error", f"GPIO{g}: {octal[g]}")
         elif g in octal and not psram:
-            add("warning", f"GPIO{g}: {octal[g]} – Modul prüfen (psram-Parameter angeben).")
+            add("warning", f"GPIO{g}: {octal[g]} – check the module (pass the psram parameter).")
         if g in strapping:
-            add("warning", f"GPIO{g} ist Strapping-Pin: {strapping[g]}. Beschaltung darf den Pegel beim Reset nicht verfälschen.")
+            add("warning", f"GPIO{g} is a strapping pin: {strapping[g]}. External circuitry must not alter its level at reset.")
         if g in input_only and usage in OUTPUT_USAGES:
-            add("error", f"GPIO{g} ist nur Eingang (kein Output, keine internen Pull-ups/-downs).")
+            add("error", f"GPIO{g} is input-only (no output, no internal pull-ups/-downs).")
         elif g in input_only:
-            add("info", f"GPIO{g} ist nur Eingang und hat keine internen Pull-ups/-downs.")
+            add("info", f"GPIO{g} is input-only and has no internal pull-ups/-downs.")
         if g in usb and native_usb is not False:
-            add("warning", f"GPIO{g} ist USB {usb[g]} – Belegung trennt die native USB-Konsole/Flash-Schnittstelle.")
+            add("warning", f"GPIO{g} is USB {usb[g]} – using it disconnects the native USB console/flashing interface.")
         if g in jtag:
-            add("info", f"GPIO{g} ist JTAG ({jtag[g]}) – bei JTAG-Debugging belegt.")
+            add("info", f"GPIO{g} is JTAG ({jtag[g]}) – occupied during JTAG debugging.")
         if g in (uart0.get("tx"), uart0.get("rx")):
-            add("warning", f"GPIO{g} ist UART0 ({'TX' if g == uart0.get('tx') else 'RX'}) – Boot-Log/Konsole/Flashen.")
+            add("warning", f"GPIO{g} is UART0 ({'TX' if g == uart0.get('tx') else 'RX'}) – boot log/console/flashing.")
         if usage in ("adc", "analog"):
             if adc1 or adc2:
                 if g not in adc1 | adc2:
-                    add("error", f"GPIO{g} ist kein ADC-Pin.")
+                    add("error", f"GPIO{g} is not an ADC pin.")
                 elif g in adc2 and adc.get("adc2_wifi_conflict") and uses_wifi:
-                    add("error", f"GPIO{g} ist ADC2 – bei aktivem Wi-Fi nicht (zuverlässig) nutzbar. ADC1-Pin wählen.")
+                    add("error", f"GPIO{g} is ADC2 – not (reliably) usable while Wi-Fi is active. Choose an ADC1 pin.")
         if g in used:
-            add("error", f"GPIO{g} ist doppelt belegt (auch: {used[g]}).")
+            add("error", f"GPIO{g} is assigned twice (also: {used[g]}).")
         used[g] = label
         for note in (info.get("pin_notes") or {}).get(str(g), []):
             add("info", note)
@@ -149,7 +149,7 @@ def check_pins(chip: str, pins: list[dict], uses_wifi: bool = True, psram: str |
                 worst = "warning"
     return {"chip": c, "status": worst, "pins": results,
             "sources": info.get("sources"),
-            "note": "Modul-/Board-spezifische Belegungen (LEDs, Taster, Displays, PSRAM) zusätzlich im Board-Schaltplan prüfen."}
+            "note": "Also check module/board-specific assignments (LEDs, buttons, displays, PSRAM) in the board schematic."}
 
 
 def _psram_blocks(chip: str, psram: str | None) -> bool:

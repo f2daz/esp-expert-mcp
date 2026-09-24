@@ -1,4 +1,4 @@
-"""MCP-Server „esp-expert“: deterministische Werkzeuge für ESP32/ESP8266-Firmware."""
+"""MCP server "esp-expert": deterministic tools for ESP32/ESP8266 firmware."""
 
 from __future__ import annotations
 
@@ -12,14 +12,14 @@ from pydantic import Field
 from . import chips, errcodes, esphome, panic, partitions, platformio, sdkconfig, serialports, versions
 
 INSTRUCTIONS = """\
-Werkzeuge für ESP32-/ESP8266-Firmware (ESP-IDF, Arduino, PlatformIO, ESPHome).
-- Vor Hardware-Code: chip_info + pin_check für die geplante Belegung.
-- Versionen nie aus dem Gedächtnis nennen: framework_versions / idf_target_support.
-- Panics/Resets: serial_log_analyze mit vollständigem Log und passender ELF.
-- Partitionen: partition_validate; sdkconfig: sdkconfig_analyze.
-- PlatformIO: platformio_analyze liefert Chip, Partitions-CSV und ELF-Pfade für die übrigen Tools.
-- ESPHome-YAML: esphome_lint (statisch), esphome_validate (echte Schema-Prüfung, wenn CLI vorhanden).
-- serial_ports/chip_probe lesen nur; Flashen läuft bewusst nicht über diesen Server.
+Tools for ESP32/ESP8266 firmware (ESP-IDF, Arduino, PlatformIO, ESPHome).
+- Before writing hardware code: chip_info + pin_check for the planned pin assignment.
+- Never quote versions from memory: use framework_versions / idf_target_support.
+- Panics/resets: serial_log_analyze with the complete log and the matching ELF.
+- Partitions: partition_validate; sdkconfig: sdkconfig_analyze.
+- PlatformIO: platformio_analyze returns chip, partition CSV and ELF paths for the other tools.
+- ESPHome YAML: esphome_lint (static), esphome_validate (real schema validation if the CLI is available).
+- serial_ports/chip_probe are read-only; flashing is intentionally not done through this server.
 """
 
 mcp = MCPServer("esp-expert", instructions=INSTRUCTIONS, version="0.1.0")
@@ -35,99 +35,99 @@ def _read(path: str) -> str:
 
 @mcp.tool(annotations=RO)
 def chip_info(
-    chip: Annotated[str | None, Field(description="z. B. esp32, esp32s3, esp32c3, esp32c6, esp8266; leer = Übersicht")] = None,
+    chip: Annotated[str | None, Field(description="e.g. esp32, esp32s3, esp32c3, esp32c6, esp8266; empty = overview")] = None,
 ) -> dict:
-    """Hardware-Stammdaten eines SoC: Kerne, RAM, Funk, USB, Strapping-/Flash-/Input-only-Pins, ADC, Touch, RTC-GPIO, Stolpersteine, Quellen."""
+    """Hardware reference data for a SoC: cores, RAM, radio, USB, strapping/flash/input-only pins, ADC, touch, RTC GPIO, pitfalls, sources."""
     return chips.chip_info(chip)
 
 
 @mcp.tool(annotations=RO)
 def pin_check(
-    chip: Annotated[str, Field(description="Target, z. B. esp32s3")],
-    pins: Annotated[list[dict], Field(description='Liste [{"gpio": 4 | "GPIO4" | "D2", "usage": "output|input|adc|i2c|spi|uart|pwm|touch", "label": "LED"}]')],
-    uses_wifi: Annotated[bool, Field(description="Wi-Fi aktiv? (ADC2-Konflikt auf ESP32)")] = True,
-    psram: Annotated[str | None, Field(description="PSRAM des Moduls: 'none', 'quad' (z. B. ESP32-WROVER) oder 'octal' (ESP32-S3 R8/N16R8); leer = unbekannt")] = None,
-    native_usb: Annotated[bool | None, Field(description="Wird die native USB-Schnittstelle genutzt?")] = None,
+    chip: Annotated[str, Field(description="Target, e.g. esp32s3")],
+    pins: Annotated[list[dict], Field(description='List [{"gpio": 4 | "GPIO4" | "D2", "usage": "output|input|adc|i2c|spi|uart|pwm|touch", "label": "LED"}]')],
+    uses_wifi: Annotated[bool, Field(description="Wi-Fi active? (ADC2 conflict on ESP32)")] = True,
+    psram: Annotated[str | None, Field(description="Module PSRAM: 'none', 'quad' (e.g. ESP32-WROVER) or 'octal' (ESP32-S3 R8/N16R8); empty = unknown")] = None,
+    native_usb: Annotated[bool | None, Field(description="Is the native USB interface used?")] = None,
 ) -> dict:
-    """Prüft eine geplante GPIO-Belegung gegen Chip-Einschränkungen (existiert, Flash/PSRAM, Strapping, Input-only, USB, UART0, ADC2+Wi-Fi, Doppelbelegung)."""
+    """Checks a planned GPIO assignment against chip constraints (exists, flash/PSRAM, strapping, input-only, USB, UART0, ADC2+Wi-Fi, double assignment)."""
     return chips.check_pins(chip, pins, uses_wifi, psram, native_usb)
 
 
 @mcp.tool(annotations=RO)
 def partition_validate(
-    csv_text: Annotated[str | None, Field(description="Inhalt der partitions.csv")] = None,
-    csv_path: Annotated[str | None, Field(description="alternativ Pfad zur CSV")] = None,
-    flash_size: Annotated[str | None, Field(description="z. B. 4MB, 8MB, 16MB")] = None,
-    target: Annotated[str | None, Field(description="Target für Bootloader-Offset, z. B. esp32s3")] = None,
-    table_offset: Annotated[str | None, Field(description="CONFIG_PARTITION_TABLE_OFFSET, Standard 0x8000")] = None,
-    app_bin_size: Annotated[int | None, Field(description="Größe des App-Binaries in Byte (build/<app>.bin) für Reserve-Prüfung")] = None,
+    csv_text: Annotated[str | None, Field(description="Contents of partitions.csv")] = None,
+    csv_path: Annotated[str | None, Field(description="alternatively, path to the CSV")] = None,
+    flash_size: Annotated[str | None, Field(description="e.g. 4MB, 8MB, 16MB")] = None,
+    target: Annotated[str | None, Field(description="Target for the bootloader offset, e.g. esp32s3")] = None,
+    table_offset: Annotated[str | None, Field(description="CONFIG_PARTITION_TABLE_OFFSET, default 0x8000")] = None,
+    app_bin_size: Annotated[int | None, Field(description="Size of the app binary in bytes (build/<app>.bin) for the headroom check")] = None,
 ) -> dict:
-    """Validiert eine ESP-IDF-Partitionstabelle: Ausrichtung, Überlappung, OTA-Layout, otadata/NVS-Größen, Flash-Größe, Reserve."""
+    """Validates an ESP-IDF partition table: alignment, overlap, OTA layout, otadata/NVS sizes, flash size, headroom."""
     if not csv_text and not csv_path:
-        return {"error": "csv_text oder csv_path angeben."}
+        return {"error": "Provide csv_text or csv_path."}
     return partitions.validate(csv_text or _read(csv_path), flash_size, target, table_offset, app_bin_size)
 
 
 @mcp.tool(annotations=RO)
 def serial_log_analyze(
-    log: Annotated[str | None, Field(description="Serial-Log (möglichst ab Reset)")] = None,
-    log_path: Annotated[str | None, Field(description="alternativ Pfad zu einer Logdatei")] = None,
-    elf: Annotated[str | None, Field(description="Pfad zur passenden ELF zum Auflösen des Backtraces")] = None,
-    arch: Annotated[Literal["xtensa", "riscv", "lx106"] | None, Field(description="Architektur für addr2line; sonst automatisch")] = None,
+    log: Annotated[str | None, Field(description="Serial log (ideally starting at reset)")] = None,
+    log_path: Annotated[str | None, Field(description="alternatively, path to a log file")] = None,
+    elf: Annotated[str | None, Field(description="Path to the matching ELF for resolving the backtrace")] = None,
+    arch: Annotated[Literal["xtensa", "riscv", "lx106"] | None, Field(description="Architecture for addr2line; otherwise auto-detected")] = None,
 ) -> dict:
-    """Analysiert Boot-/Crash-Logs: Reset-Grund, Guru Meditation, EXCCAUSE/MCAUSE, Stack-Overflow, WDT, Brownout, ESP_ERROR_CHECK, ESP8266-Exceptions; dekodiert Backtrace per addr2line."""
+    """Analyzes boot/crash logs: reset reason, Guru Meditation, EXCCAUSE/MCAUSE, stack overflow, WDT, brownout, ESP_ERROR_CHECK, ESP8266 exceptions; decodes the backtrace via addr2line."""
     if not log and not log_path:
-        return {"error": "log oder log_path angeben."}
+        return {"error": "Provide log or log_path."}
     return panic.analyze(log or _read(log_path), os.path.expanduser(elf) if elf else None, arch)
 
 
 @mcp.tool(annotations=RO_NET)
 def esp_err_lookup(
-    code: Annotated[str, Field(description="esp_err_t als Hex (0x1101), Dezimal oder Namensteil (NVS_NO_FREE)")],
+    code: Annotated[str, Field(description="esp_err_t as hex (0x1101), decimal or part of the name (NVS_NO_FREE)")],
 ) -> dict:
-    """Übersetzt esp_err_t-Codes in Namen und Beschreibung (Tabelle aus lokalem $IDF_PATH oder ESP-IDF-Repo)."""
+    """Translates esp_err_t codes into name and description (table from local $IDF_PATH or the ESP-IDF repo)."""
     return errcodes.lookup(code)
 
 
 @mcp.tool(annotations=RO)
 def sdkconfig_analyze(
-    sdkconfig_path: Annotated[str, Field(description="Pfad zu sdkconfig")],
-    defaults_path: Annotated[str | None, Field(description="Pfad zu sdkconfig.defaults (sonst automatisch daneben)")] = None,
+    sdkconfig_path: Annotated[str, Field(description="Path to sdkconfig")],
+    defaults_path: Annotated[str | None, Field(description="Path to sdkconfig.defaults (otherwise auto-detected next to it)")] = None,
 ) -> dict:
-    """Fasst ein sdkconfig zusammen (Target, Flash, PSRAM, Log, WDT, Security, OTA) und meldet riskante Einstellungen sowie Abweichungen zu sdkconfig.defaults."""
+    """Summarizes an sdkconfig (target, flash, PSRAM, log, WDT, security, OTA) and reports risky settings and deviations from sdkconfig.defaults."""
     return sdkconfig.analyze(os.path.expanduser(sdkconfig_path), os.path.expanduser(defaults_path) if defaults_path else None)
 
 
 @mcp.tool(annotations=RO)
 def sdkconfig_get(
-    sdkconfig_path: Annotated[str, Field(description="Pfad zu sdkconfig")],
-    keys: Annotated[list[str], Field(description="CONFIG_-Schlüssel oder Teilnamen, z. B. ['SPIRAM', 'CONFIG_FREERTOS_HZ']")],
+    sdkconfig_path: Annotated[str, Field(description="Path to sdkconfig")],
+    keys: Annotated[list[str], Field(description="CONFIG_ keys or partial names, e.g. ['SPIRAM', 'CONFIG_FREERTOS_HZ']")],
 ) -> dict:
-    """Liest gezielt Werte aus einem sdkconfig (Teilnamen liefern alle passenden Schlüssel)."""
+    """Reads specific values from an sdkconfig (partial names return all matching keys)."""
     return sdkconfig.get(os.path.expanduser(sdkconfig_path), keys)
 
 
 @mcp.tool(annotations=RO)
 def serial_ports() -> dict:
-    """Listet serielle Ports mit USB-VID/PID und erkennt typische ESP-Bridges (CP210x, CH340, CH9102, FTDI, Espressif USB-Serial/JTAG)."""
+    """Lists serial ports with USB VID/PID and detects common ESP bridges (CP210x, CH340, CH9102, FTDI, Espressif USB-Serial/JTAG)."""
     return serialports.list_serial()
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False))
 def chip_probe(
-    port: Annotated[str, Field(description="z. B. /dev/cu.usbserial-0001, /dev/ttyUSB0, COM5")],
-    baud: Annotated[int, Field(description="Baudrate für esptool")] = 115200,
+    port: Annotated[str, Field(description="e.g. /dev/cu.usbserial-0001, /dev/ttyUSB0, COM5")],
+    baud: Annotated[int, Field(description="Baud rate for esptool")] = 115200,
 ) -> dict:
-    """Identifiziert das angeschlossene Board per esptool (Chip, Revision, Features, MAC, Flash-Größe). Schreibt nichts, setzt den Chip aber zurück."""
+    """Identifies the connected board via esptool (chip, revision, features, MAC, flash size). Writes nothing, but resets the chip."""
     return serialports.probe(port, baud)
 
 
 @mcp.tool(annotations=RO_NET)
 def framework_versions(
-    component: Annotated[str | None, Field(description=f"{sorted(versions.REPOS)} oder 'owner/repo'; leer = Überblick")] = None,
+    component: Annotated[str | None, Field(description=f"{sorted(versions.REPOS)} or 'owner/repo'; empty = overview")] = None,
     include_prerelease: bool = False,
 ) -> dict:
-    """Aktuelle Releases live von GitHub (ESP-IDF-Linien, arduino-esp32, ESP8266-Core, ESPHome, esptool, pioarduino …), semantisch sortiert."""
+    """Current releases live from GitHub (ESP-IDF lines, arduino-esp32, ESP8266 core, ESPHome, esptool, pioarduino …), sorted semantically."""
     if not component:
         return versions.overview()
     return versions.releases(component, include_prerelease)
@@ -135,34 +135,34 @@ def framework_versions(
 
 @mcp.tool(annotations=RO_NET)
 def idf_target_support(
-    target: Annotated[str | None, Field(description="z. B. esp32c5; leer = alle Versionen")] = None,
+    target: Annotated[str | None, Field(description="e.g. esp32c5; empty = all versions")] = None,
 ) -> dict:
-    """Welche ESP-IDF-Versionen welches Target unterstützen (Espressif-Index idf_versions.json)."""
+    """Which ESP-IDF versions support which target (Espressif index idf_versions.json)."""
     return versions.idf_targets(target)
 
 
 @mcp.tool(annotations=RO)
 def esphome_lint(
-    yaml_path: Annotated[str, Field(description="Pfad zur ESPHome-Gerätekonfiguration")],
+    yaml_path: Annotated[str, Field(description="Path to the ESPHome device configuration")],
 ) -> dict:
-    """Statische Prüfung einer ESPHome-YAML: Plattform/Variante, Pin-Belegung gegen Chipdaten, Klartext-Secrets, API/OTA-Absicherung, Framework-Hinweise, bekannte Breaking Changes."""
+    """Static check of an ESPHome YAML: platform/variant, pin assignment against chip data, plaintext secrets, API/OTA security, framework hints, known breaking changes."""
     return esphome.lint(os.path.expanduser(yaml_path))
 
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=True))
 def esphome_validate(
-    yaml_path: Annotated[str, Field(description="Pfad zur ESPHome-Gerätekonfiguration")],
-    use_uvx: Annotated[bool, Field(description="ESPHome per uvx temporär laden, falls nicht installiert")] = False,
+    yaml_path: Annotated[str, Field(description="Path to the ESPHome device configuration")],
+    use_uvx: Annotated[bool, Field(description="Load ESPHome temporarily via uvx if not installed")] = False,
 ) -> dict:
-    """Vollständige Schema-Validierung per `esphome config` (benötigt ESPHome-CLI oder uvx). Secrets werden in der Ausgabe maskiert."""
+    """Full schema validation via `esphome config` (requires the ESPHome CLI or uvx). Secrets are masked in the output."""
     return esphome.validate(os.path.expanduser(yaml_path), use_uvx)
 
 
 @mcp.tool(annotations=RO)
 def platformio_analyze(
-    ini_path: Annotated[str, Field(description="Pfad zu platformio.ini")],
+    ini_path: Annotated[str, Field(description="Path to platformio.ini")],
 ) -> dict:
-    """Wertet platformio.ini aus: Environments, Plattform-Quelle (Registry/pioarduino, gepinnt?), Board→Chip, Framework, Partitionen, Baudraten, lib_deps, Build-Artefakte (ELF/BIN/sdkconfig)."""
+    """Evaluates platformio.ini: environments, platform source (registry/pioarduino, pinned?), board→chip, framework, partitions, baud rates, lib_deps, build artifacts (ELF/BIN/sdkconfig)."""
     return platformio.analyze(os.path.expanduser(ini_path))
 
 

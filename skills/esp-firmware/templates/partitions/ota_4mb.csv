@@ -1,4 +1,4 @@
-# ESP-IDF, 4 MB Flash, OTA mit Rollback. Tabelle bei 0x8000 (Standard).
+# ESP-IDF, 4 MB flash, OTA with rollback. Table at 0x8000 (default).
 # Name,    Type, SubType,  Offset,   Size
 nvs,       data, nvs,      0x9000,   0x5000
 otadata,   data, ota,      0xe000,   0x2000

@@ -1,11 +1,11 @@
 {
  "_meta": {
-  "hinweis": "Werte aus ESP-IDF „GPIO & RTC GPIO“ (stable) und Espressif-Datenblättern; Widersprüche in notes. conditional_pins sind nur je nach Modul (PSRAM/Octal/SiP-Flash) belegt.",
-  "stand": "2026-09-24"
+  "note": "Values from ESP-IDF \"GPIO & RTC GPIO\" (stable) and Espressif datasheets; contradictions are listed in notes. conditional_pins are only occupied depending on the module (PSRAM/octal/SiP flash).",
+  "as_of": "2026-09-24"
  },
  "esp32": {
   "name": "ESP32",
-  "cpu": "Xtensa LX6 dual-core bis 240 MHz (ESP32-S0WD: single-core, 160 MHz)",
+  "cpu": "Xtensa LX6 dual-core up to 240 MHz (ESP32-S0WD: single-core, 160 MHz)",
   "cores": 2,
   "arch": "xtensa",
   "sram_kb": 520,
@@ -29,19 +29,19 @@
    31
   ],
   "strapping_pins": {
-   "0": "Boot-Modus (weak pull-up, 1): 1 = SPI-Boot, 0 (+GPIO2=0) = Download-Boot (UART/SDIO)",
-   "2": "Boot-Modus (pull-down, 0): muss für Download-Boot 0 sein",
-   "5": "Timing SDIO-Slave zusammen mit MTDO (pull-up, 1)",
-   "12": "MTDI: VDD_SDIO-Spannung (pull-down, 0): 0 = 3,3 V, 1 = 1,8 V interner LDO; per eFuse EFUSE_SDIO_FORCE übersteuerbar",
-   "15": "MTDO: U0TXD-ROM-Ausgabe (pull-up, 1 = an) und SDIO-Slave-Timing"
+   "0": "Boot mode (weak pull-up, 1): 1 = SPI boot, 0 (+GPIO2=0) = download boot (UART/SDIO)",
+   "2": "Boot mode (pull-down, 0): must be 0 for download boot",
+   "5": "SDIO slave timing together with MTDO (pull-up, 1)",
+   "12": "MTDI: VDD_SDIO voltage (pull-down, 0): 0 = 3.3 V, 1 = 1.8 V internal LDO; can be overridden via eFuse EFUSE_SDIO_FORCE",
+   "15": "MTDO: U0TXD ROM output (pull-up, 1 = on) and SDIO slave timing"
   },
   "flash_psram_pins": {
-   "6": "SPI0/1 Flash (SD_CLK/SPICLK)",
-   "7": "SPI0/1 Flash (SD_DATA0/SPIQ)",
-   "8": "SPI0/1 Flash (SD_DATA1/SPID)",
-   "9": "SPI0/1 Flash (SD_DATA2/SPIHD)",
-   "10": "SPI0/1 Flash (SD_DATA3/SPIWP)",
-   "11": "SPI0/1 Flash (SD_CMD/SPICS0)"
+   "6": "SPI0/1 flash (SD_CLK/SPICLK)",
+   "7": "SPI0/1 flash (SD_DATA0/SPIQ)",
+   "8": "SPI0/1 flash (SD_DATA1/SPID)",
+   "9": "SPI0/1 flash (SD_DATA2/SPIHD)",
+   "10": "SPI0/1 flash (SD_DATA3/SPIWP)",
+   "11": "SPI0/1 flash (SD_CMD/SPICS0)"
   },
   "input_only_pins": [
    34,
@@ -124,15 +124,15 @@
    39
   ],
   "notes": [
-   "GPIO34-39 nur Eingang, keine per Software zuschaltbaren Pull-up/Pull-down",
-   "GPIO6-11 und GPIO16-17 sind auf Modulen mit SPI-Flash/PSRAM verbunden – nicht verwenden",
-   "ADC2 nicht nutzbar, solange Wi-Fi aktiv ist – ADC1 (GPIO32-39) verwenden",
-   "GPIO12 (MTDI) bestimmt beim Reset die VDD_SDIO-Spannung: externer Pull-up bei 3,3-V-Flash führt zu Bootproblemen",
-   "Interrupts von GPIO36/GPIO39 nicht nutzen, wenn ADC oder Wi-Fi/BT mit Sleep aktiv sind (Errata GPIO-3.11)",
-   "Touch-Sensor hat laut Datenblatt den Conducted-Susceptibility-Test (CS) nicht bestanden, Einsatz eingeschränkt",
-   "Kein natives USB; Flashen über UART0 (GPIO1/GPIO3)",
+   "GPIO34-39 input-only, no software-enabled pull-up/pull-down",
+   "GPIO6-11 and GPIO16-17 are connected to SPI flash/PSRAM on modules – do not use",
+   "ADC2 unusable while Wi-Fi is active – use ADC1 (GPIO32-39)",
+   "GPIO12 (MTDI) sets the VDD_SDIO voltage at reset: an external pull-up with 3.3 V flash causes boot problems",
+   "Do not use GPIO36/GPIO39 interrupts while ADC or Wi-Fi/BT with sleep is active (errata GPIO-3.11)",
+   "Per datasheet, the touch sensor did not pass the conducted susceptibility (CS) test; limited use",
+   "No native USB; flashing via UART0 (GPIO1/GPIO3)",
    "RTC-RAM: 8 KB RTC FAST + 8 KB RTC SLOW",
-   "Touch-Zuordnung laut Datenblatt: T0=GPIO4, T1=GPIO0, T2=GPIO2, T3=GPIO15, T4=GPIO13, T5=GPIO12, T6=GPIO14, T7=GPIO27, T8=GPIO33, T9=GPIO32"
+   "Touch mapping per datasheet: T0=GPIO4, T1=GPIO0, T2=GPIO2, T3=GPIO15, T4=GPIO13, T5=GPIO12, T6=GPIO14, T7=GPIO27, T8=GPIO33, T9=GPIO32"
   ],
   "sources": [
    "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/gpio.html",
@@ -140,18 +140,18 @@
    "https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf (v5.3)"
   ],
   "conditional_pins": {
-   "16": "auf WROVER-/PSRAM-Modulen PSRAM (SPI0/1), auf WROOM ohne PSRAM frei",
-   "17": "auf WROVER-/PSRAM-Modulen PSRAM (SPI0/1), auf WROOM ohne PSRAM frei"
+   "16": "PSRAM (SPI0/1) on WROVER/PSRAM modules, free on WROOM without PSRAM",
+   "17": "PSRAM (SPI0/1) on WROVER/PSRAM modules, free on WROOM without PSRAM"
   },
   "pin_notes": {
    "12": [
-    "Beim Reset HIGH ⇒ Flash-Spannung 1,8 V – 3,3-V-Flash startet dann nicht (typisch: \"flash read err\"). Nicht mit Pull-up beschalten."
+    "HIGH at reset ⇒ flash voltage 1.8 V – 3.3 V flash then fails to boot (typically: \"flash read err\"). Do not connect a pull-up."
    ]
   }
  },
  "esp32s2": {
   "name": "ESP32-S2",
-  "cpu": "Xtensa LX7 single-core bis 240 MHz",
+  "cpu": "Xtensa LX7 single-core up to 240 MHz",
   "cores": 1,
   "arch": "xtensa",
   "sram_kb": 320,
@@ -171,18 +171,18 @@
    25
   ],
   "strapping_pins": {
-   "0": "Boot-Modus (weak pull-up, 1): 1 = SPI-Boot, 0 (+GPIO46=0) = Joint-Download-Boot (USB-OTG/UART/SPI)",
-   "45": "VDD_SPI-Spannung (weak pull-down, 0): 0 = 3,3 V, 1 = 1,8 V; per eFuse übersteuerbar",
-   "46": "Boot-Modus mit GPIO0 und ROM-Ausgabe (weak pull-down, 0); nur Eingang"
+   "0": "Boot mode (weak pull-up, 1): 1 = SPI boot, 0 (+GPIO46=0) = joint download boot (USB-OTG/UART/SPI)",
+   "45": "VDD_SPI voltage (weak pull-down, 0): 0 = 3.3 V, 1 = 1.8 V; can be overridden via eFuse",
+   "46": "Boot mode with GPIO0 and ROM output (weak pull-down, 0); input-only"
   },
   "flash_psram_pins": {
-   "26": "SPI0/1 Flash/PSRAM",
-   "27": "SPI0/1 Flash/PSRAM",
-   "28": "SPI0/1 Flash/PSRAM",
-   "29": "SPI0/1 Flash/PSRAM",
-   "30": "SPI0/1 Flash/PSRAM",
-   "31": "SPI0/1 Flash/PSRAM",
-   "32": "SPI0/1 Flash/PSRAM"
+   "26": "SPI0/1 flash/PSRAM",
+   "27": "SPI0/1 flash/PSRAM",
+   "28": "SPI0/1 flash/PSRAM",
+   "29": "SPI0/1 flash/PSRAM",
+   "30": "SPI0/1 flash/PSRAM",
+   "31": "SPI0/1 flash/PSRAM",
+   "32": "SPI0/1 flash/PSRAM"
   },
   "input_only_pins": [
    46
@@ -273,12 +273,12 @@
    21
   ],
   "notes": [
-   "Kein Bluetooth",
-   "Kein USB-Serial-JTAG-Controller, nur USB-OTG (Full-Speed) an GPIO19/20",
-   "GPIO26-32 für SPI-Flash/PSRAM reserviert",
-   "GPIO46 nur Eingang, fest mit Pull-down",
-   "ADC2 wird von Wi-Fi mitbenutzt (IDF-Treiber schützt den Zugriff)",
-   "JTAG an GPIO39-42"
+   "No Bluetooth",
+   "No USB-Serial-JTAG controller, only USB-OTG (full-speed) on GPIO19/20",
+   "GPIO26-32 reserved for SPI flash/PSRAM",
+   "GPIO46 input-only, fixed pull-down",
+   "ADC2 is shared with Wi-Fi (the IDF driver arbitrates access)",
+   "JTAG on GPIO39-42"
   ],
   "sources": [
    "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s2/api-reference/peripherals/gpio.html",
@@ -289,7 +289,7 @@
  },
  "esp32s3": {
   "name": "ESP32-S3",
-  "cpu": "Xtensa LX7 dual-core bis 240 MHz",
+  "cpu": "Xtensa LX7 dual-core up to 240 MHz",
   "cores": 2,
   "arch": "xtensa",
   "sram_kb": 512,
@@ -310,19 +310,19 @@
    25
   ],
   "strapping_pins": {
-   "0": "Boot-Modus (weak pull-up, 1): 1 = SPI-Boot, 0 (+GPIO46=0) = Joint-Download-Boot (USB-Serial-JTAG/USB-OTG/UART)",
-   "3": "JTAG-Signalquelle (floating, keine internen Pulls) – nur wirksam mit EFUSE_STRAP_JTAG_SEL",
-   "45": "VDD_SPI-Spannung (weak pull-down, 0): 0 = 3,3 V, 1 = 1,8 V; per eFuse übersteuerbar",
-   "46": "Boot-Modus mit GPIO0 und ROM-Ausgabe (weak pull-down, 0)"
+   "0": "Boot mode (weak pull-up, 1): 1 = SPI boot, 0 (+GPIO46=0) = joint download boot (USB-Serial-JTAG/USB-OTG/UART)",
+   "3": "JTAG signal source (floating, no internal pulls) – only effective with EFUSE_STRAP_JTAG_SEL",
+   "45": "VDD_SPI voltage (weak pull-down, 0): 0 = 3.3 V, 1 = 1.8 V; can be overridden via eFuse",
+   "46": "Boot mode with GPIO0 and ROM output (weak pull-down, 0)"
   },
   "flash_psram_pins": {
-   "26": "SPI0/1 Flash/PSRAM",
-   "27": "SPI0/1 Flash/PSRAM",
-   "28": "SPI0/1 Flash/PSRAM",
-   "29": "SPI0/1 Flash/PSRAM",
-   "30": "SPI0/1 Flash/PSRAM",
-   "31": "SPI0/1 Flash/PSRAM",
-   "32": "SPI0/1 Flash/PSRAM"
+   "26": "SPI0/1 flash/PSRAM",
+   "27": "SPI0/1 flash/PSRAM",
+   "28": "SPI0/1 flash/PSRAM",
+   "29": "SPI0/1 flash/PSRAM",
+   "30": "SPI0/1 flash/PSRAM",
+   "31": "SPI0/1 flash/PSRAM",
+   "32": "SPI0/1 flash/PSRAM"
   },
   "input_only_pins": [],
   "usb_pins": {
@@ -408,13 +408,13 @@
    21
   ],
   "notes": [
-   "GPIO26-32 für SPI-Flash/PSRAM reserviert; bei Octal-Flash/-PSRAM zusätzlich GPIO33-37",
-   "GPIO19/20 standardmäßig USB-Serial-JTAG (auch USB-OTG); Umkonfiguration als GPIO deaktiviert USB-JTAG",
-   "ADC2 wird von Wi-Fi mitbenutzt (IDF-Treiber schützt den Zugriff)",
-   "Kein DAC",
-   "GPIO3 als JTAG-Strapping-Pin ist floating und hat keine internen Pulls",
-   "Bluetooth nur LE (Bluetooth 5, Mesh), kein Classic BT",
-   "Datenblatt-Varianten mit Octal-PSRAM: ESP32-S3R8, ESP32-S3R16V, ESP32-S3R8V (EOL)"
+   "GPIO26-32 reserved for SPI flash/PSRAM; with octal flash/PSRAM additionally GPIO33-37",
+   "GPIO19/20 are USB-Serial-JTAG by default (also USB-OTG); reconfiguring them as GPIO disables USB-JTAG",
+   "ADC2 is shared with Wi-Fi (the IDF driver arbitrates access)",
+   "No DAC",
+   "GPIO3 as JTAG strapping pin is floating and has no internal pulls",
+   "Bluetooth LE only (Bluetooth 5, Mesh), no Classic BT",
+   "Datasheet variants with octal PSRAM: ESP32-S3R8, ESP32-S3R16V, ESP32-S3R8V (EOL)"
   ],
   "sources": [
    "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/gpio.html",
@@ -422,17 +422,17 @@
    "https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf (v2.2)"
   ],
   "conditional_pins": {
-   "33": "bei Octal-Flash/Octal-PSRAM belegt (SPIIO4-7, SPIDQS), z. B. ESP32-S3R8/R8V",
-   "34": "bei Octal-Flash/Octal-PSRAM belegt (SPIIO4-7, SPIDQS), z. B. ESP32-S3R8/R8V",
-   "35": "bei Octal-Flash/Octal-PSRAM belegt (SPIIO4-7, SPIDQS), z. B. ESP32-S3R8/R8V",
-   "36": "bei Octal-Flash/Octal-PSRAM belegt (SPIIO4-7, SPIDQS), z. B. ESP32-S3R8/R8V",
-   "37": "bei Octal-Flash/Octal-PSRAM belegt (SPIIO4-7, SPIDQS), z. B. ESP32-S3R8/R8V"
+   "33": "occupied with octal flash/octal PSRAM (SPIIO4-7, SPIDQS), e.g. ESP32-S3R8/R8V",
+   "34": "occupied with octal flash/octal PSRAM (SPIIO4-7, SPIDQS), e.g. ESP32-S3R8/R8V",
+   "35": "occupied with octal flash/octal PSRAM (SPIIO4-7, SPIDQS), e.g. ESP32-S3R8/R8V",
+   "36": "occupied with octal flash/octal PSRAM (SPIIO4-7, SPIDQS), e.g. ESP32-S3R8/R8V",
+   "37": "occupied with octal flash/octal PSRAM (SPIIO4-7, SPIDQS), e.g. ESP32-S3R8/R8V"
   },
   "pin_notes": {}
  },
  "esp32c2": {
   "name": "ESP32-C2 (ESP8684)",
-  "cpu": "RISC-V single-core bis 120 MHz",
+  "cpu": "RISC-V single-core up to 120 MHz",
   "cores": 1,
   "arch": "riscv",
   "sram_kb": 272,
@@ -448,16 +448,16 @@
   ],
   "gpio_missing": [],
   "strapping_pins": {
-   "8": "ROM-Ausgabe; für Joint-Download-Boot 1 (kein Default-Pull, N/A)",
-   "9": "Boot-Modus (weak pull-up, 1): 1 = SPI-Boot, 0 (+GPIO8=1) = Joint-Download-Boot (UART)"
+   "8": "ROM output; 1 for joint download boot (no default pull, N/A)",
+   "9": "Boot mode (weak pull-up, 1): 1 = SPI boot, 0 (+GPIO8=1) = joint download boot (UART)"
   },
   "flash_psram_pins": {
-   "12": "SPI0/1 Flash",
-   "13": "SPI0/1 Flash",
-   "14": "SPI0/1 Flash",
-   "15": "SPI0/1 Flash",
-   "16": "SPI0/1 Flash",
-   "17": "SPI0/1 Flash"
+   "12": "SPI0/1 flash",
+   "13": "SPI0/1 flash",
+   "14": "SPI0/1 flash",
+   "15": "SPI0/1 flash",
+   "16": "SPI0/1 flash",
+   "17": "SPI0/1 flash"
   },
   "input_only_pins": [],
   "usb_pins": {},
@@ -493,27 +493,27 @@
    5
   ],
   "notes": [
-   "Datenblatt unter dem Namen ESP8684 (esp32-c2_datasheet_en.pdf existiert nicht)",
-   "Chip hat 21 GPIO (GPIO0-20); bei SiP-Flash-Varianten nur 14 nutzbar – laut ESP8684-Datenblatt: 14 GPIOs",
-   "Widerspruch in der IDF-Seite: Einleitung nennt GPIO11-17 für SiP-Flash, Tabelle/Hinweis nennt GPIO12-17 als SPI0/1",
-   "Nur GPIO0-5 wecken aus Deep-Sleep; übrige nur aus Light-Sleep",
-   "Kein natives USB, kein Touch, kein DAC, nur ADC1",
-   "BLE: Datenblatt nennt Bluetooth 5.3 certified",
-   "SRAM: 272 KB, davon 16 KB als Cache",
-   "nicht verifiziert: Größe des RTC-Speichers (Datenblatt sagt nur, dass RTC-Memory im Deep-Sleep versorgt bleibt)"
+   "Datasheet published under the name ESP8684 (esp32-c2_datasheet_en.pdf does not exist)",
+   "Chip has 21 GPIOs (GPIO0-20); only 14 usable on SiP flash variants – per ESP8684 datasheet: 14 GPIOs",
+   "Contradiction in the IDF page: the introduction lists GPIO11-17 for SiP flash, the table/note lists GPIO12-17 as SPI0/1",
+   "Only GPIO0-5 wake from deep sleep; the others only from light sleep",
+   "No native USB, no touch, no DAC, ADC1 only",
+   "BLE: datasheet states Bluetooth 5.3 certified",
+   "SRAM: 272 KB, of which 16 KB used as cache",
+   "not verified: RTC memory size (datasheet only states that RTC memory stays powered in deep sleep)"
   ],
   "sources": [
    "https://docs.espressif.com/projects/esp-idf/en/stable/esp32c2/api-reference/peripherals/gpio.html",
    "https://www.espressif.com/sites/default/files/documentation/esp8684_datasheet_en.pdf (v2.3)"
   ],
   "conditional_pins": {
-   "11": "bei SiP-Flash-Varianten für Flash reserviert (laut IDF-Einleitung; in IDF-Tabelle nicht als SPI0/1 markiert)"
+   "11": "reserved for flash on SiP flash variants (per IDF introduction; not marked as SPI0/1 in the IDF table)"
   },
   "pin_notes": {}
  },
  "esp32c3": {
   "name": "ESP32-C3",
-  "cpu": "RISC-V single-core bis 160 MHz",
+  "cpu": "RISC-V single-core up to 160 MHz",
   "cores": 1,
   "arch": "riscv",
   "sram_kb": 400,
@@ -529,17 +529,17 @@
   ],
   "gpio_missing": [],
   "strapping_pins": {
-   "2": "Boot-Strapping (floating); bestimmt den Modus faktisch nicht, Pull-up wegen Glitches empfohlen",
-   "8": "ROM-Ausgabe; muss für Joint-Download-Boot 1 sein (floating)",
-   "9": "Boot-Modus (weak pull-up, 1): 1 = SPI-Boot, 0 (+GPIO8=1) = Joint-Download-Boot (USB-Serial-JTAG/UART)"
+   "2": "Boot strapping (floating); effectively does not select the mode, pull-up recommended against glitches",
+   "8": "ROM output; must be 1 for joint download boot (floating)",
+   "9": "Boot mode (weak pull-up, 1): 1 = SPI boot, 0 (+GPIO8=1) = joint download boot (USB-Serial-JTAG/UART)"
   },
   "flash_psram_pins": {
-   "12": "SPI0/1 Flash",
-   "13": "SPI0/1 Flash",
-   "14": "SPI0/1 Flash",
-   "15": "SPI0/1 Flash",
-   "16": "SPI0/1 Flash",
-   "17": "SPI0/1 Flash"
+   "12": "SPI0/1 flash",
+   "13": "SPI0/1 flash",
+   "14": "SPI0/1 flash",
+   "15": "SPI0/1 flash",
+   "16": "SPI0/1 flash",
+   "17": "SPI0/1 flash"
   },
   "input_only_pins": [],
   "usb_pins": {
@@ -580,14 +580,14 @@
    5
   ],
   "notes": [
-   "GPIO12-17 für SPI-Flash reserviert",
-   "GPIO18/19 standardmäßig USB-Serial-JTAG; Umkonfiguration als GPIO deaktiviert USB-JTAG",
-   "ADC2 (GPIO5) im Oneshot-Modus von ESP-IDF nicht unterstützt (instabile Ergebnisse, Errata); erzwingbar über CONFIG_ADC_ONESHOT_FORCE_USE_ADC2_ON_C3",
-   "nicht verifiziert: ADC2/Wi-Fi-Konflikt – die C3-ADC-Seite nennt ihn nicht, daher null",
-   "Nur GPIO0-5 wecken aus Deep-Sleep; übrige nur aus Light-Sleep",
-   "22 GPIO für ESP32-C3/C3FH4/C3FN4/C3FH8X, nur 16 für ESP32-C3FH4X und C3FH4AZ (Datenblatt)",
-   "SRAM: 400 KB, davon 16 KB als Cache",
-   "Kein Touch, kein DAC"
+   "GPIO12-17 reserved for SPI flash",
+   "GPIO18/19 are USB-Serial-JTAG by default; reconfiguring them as GPIO disables USB-JTAG",
+   "ADC2 (GPIO5) not supported by ESP-IDF in oneshot mode (unstable results, errata); can be forced via CONFIG_ADC_ONESHOT_FORCE_USE_ADC2_ON_C3",
+   "not verified: ADC2/Wi-Fi conflict – the C3 ADC page does not mention it, hence null",
+   "Only GPIO0-5 wake from deep sleep; the others only from light sleep",
+   "22 GPIOs for ESP32-C3/C3FH4/C3FN4/C3FH8X, only 16 for ESP32-C3FH4X and C3FH4AZ (datasheet)",
+   "SRAM: 400 KB, of which 16 KB used as cache",
+   "No touch, no DAC"
   ],
   "sources": [
    "https://docs.espressif.com/projects/esp-idf/en/stable/esp32c3/api-reference/peripherals/gpio.html",
@@ -596,13 +596,13 @@
   ],
   "pin_notes": {
    "5": [
-    "ADC2 auf ESP32-C3: Oneshot-Betrieb wegen Hardware-Errata in ESP-IDF nicht unterstützt – ADC1 (GPIO0–4) nutzen."
+    "ADC2 on ESP32-C3: oneshot operation not supported in ESP-IDF due to hardware errata – use ADC1 (GPIO0–4)."
    ]
   }
  },
  "esp32c5": {
   "name": "ESP32-C5",
-  "cpu": "RISC-V single-core (HP) bis 240 MHz + LP-RISC-V bis 48 MHz",
+  "cpu": "RISC-V single-core (HP) up to 240 MHz + LP RISC-V up to 48 MHz",
   "cores": 1,
   "arch": "riscv",
   "sram_kb": 384,
@@ -619,22 +619,22 @@
   ],
   "gpio_missing": [],
   "strapping_pins": {
-   "2": "nur IDF: Strapping-Pin; Datenblatt führt MTMS (=GPIO2) nur in der Default-Tabelle (floating) ohne Funktion",
-   "3": "nur Datenblatt: MTDI (=GPIO3) steuert mit GPIO25 SDIO-Sample-/Drive-Flanke (floating); nicht in IDF-Liste",
-   "7": "JTAG-Signalquelle (floating, keine internen Pulls)",
-   "25": "SDIO-Sample-/Drive-Flanke zusammen mit MTDI (floating)",
-   "26": "nur Datenblatt: Boot-Modus (floating; 0 zusammen mit GPIO27=0/GPIO28=0 = Joint-Download-Boot 1); nicht in IDF-Liste",
-   "27": "Boot-Modus und ROM-Ausgabe (pull-up, 1)",
-   "28": "Boot-Modus (pull-up, 1): 1 = SPI-Boot, 0 = Download-Boot"
+   "2": "IDF only: strapping pin; the datasheet lists MTMS (=GPIO2) only in the default table (floating) without a function",
+   "3": "datasheet only: MTDI (=GPIO3) controls the SDIO sample/drive edge together with GPIO25 (floating); not in the IDF list",
+   "7": "JTAG signal source (floating, no internal pulls)",
+   "25": "SDIO sample/drive edge together with MTDI (floating)",
+   "26": "datasheet only: boot mode (floating; 0 together with GPIO27=0/GPIO28=0 = joint download boot 1); not in the IDF list",
+   "27": "Boot mode and ROM output (pull-up, 1)",
+   "28": "Boot mode (pull-up, 1): 1 = SPI boot, 0 = download boot"
   },
   "flash_psram_pins": {
-   "16": "SPI0/1 Flash/PSRAM",
-   "17": "SPI0/1 Flash/PSRAM",
-   "18": "SPI0/1 Flash/PSRAM",
-   "19": "SPI0/1 Flash/PSRAM",
-   "20": "SPI0/1 Flash/PSRAM",
-   "21": "SPI0/1 Flash/PSRAM",
-   "22": "SPI0/1 Flash/PSRAM"
+   "16": "SPI0/1 flash/PSRAM",
+   "17": "SPI0/1 flash/PSRAM",
+   "18": "SPI0/1 flash/PSRAM",
+   "19": "SPI0/1 flash/PSRAM",
+   "20": "SPI0/1 flash/PSRAM",
+   "21": "SPI0/1 flash/PSRAM",
+   "22": "SPI0/1 flash/PSRAM"
   },
   "input_only_pins": [],
   "usb_pins": {
@@ -675,12 +675,12 @@
    6
   ],
   "notes": [
-   "Widerspruch Strapping-Pins: IDF nennt GPIO2, 7, 25, 27, 28; Datenblatt v1.5 nennt GPIO7, 25, 26, 27, 28 und MTDI (GPIO3), Default-Tabelle zusätzlich MTMS (GPIO2)",
-   "GPIO16-22 für SPI-Flash/PSRAM reserviert",
-   "GPIO13/14 standardmäßig USB-Serial-JTAG; Umkonfiguration als GPIO deaktiviert USB-JTAG",
-   "LP-GPIO0-6 für Deep-Sleep-Wake, LP-Core und LP-Peripherie (LP_UART, LP_I2C)",
-   "Dual-Band Wi-Fi 6 (2,4 und 5 GHz); Datenblatt-Titel 'Bluetooth 5 (LE)', Feature-Liste 'Bluetooth Core 6.0 certified'",
-   "Nur ADC1, kein Touch, kein DAC"
+   "Contradiction on strapping pins: IDF lists GPIO2, 7, 25, 27, 28; datasheet v1.5 lists GPIO7, 25, 26, 27, 28 and MTDI (GPIO3), the default table additionally MTMS (GPIO2)",
+   "GPIO16-22 reserved for SPI flash/PSRAM",
+   "GPIO13/14 are USB-Serial-JTAG by default; reconfiguring them as GPIO disables USB-JTAG",
+   "LP GPIO0-6 for deep-sleep wake, LP core and LP peripherals (LP_UART, LP_I2C)",
+   "Dual-band Wi-Fi 6 (2.4 and 5 GHz); datasheet title 'Bluetooth 5 (LE)', feature list 'Bluetooth Core 6.0 certified'",
+   "ADC1 only, no touch, no DAC"
   ],
   "sources": [
    "https://docs.espressif.com/projects/esp-idf/en/stable/esp32c5/api-reference/peripherals/gpio.html",
@@ -690,7 +690,7 @@
  },
  "esp32c6": {
   "name": "ESP32-C6",
-  "cpu": "RISC-V single-core (HP) bis 160 MHz + LP-RISC-V bis 20 MHz",
+  "cpu": "RISC-V single-core (HP) up to 160 MHz + LP RISC-V up to 20 MHz",
   "cores": 1,
   "arch": "riscv",
   "sram_kb": 512,
@@ -707,20 +707,20 @@
   ],
   "gpio_missing": [],
   "strapping_pins": {
-   "4": "MTMS: SDIO-Sample-/Drive-Flanke (floating)",
-   "5": "MTDI: SDIO-Sample-/Drive-Flanke (floating)",
-   "8": "ROM-Ausgabe; muss für Joint-Download-Boot 1 sein (floating)",
-   "9": "Boot-Modus (weak pull-up, 1): 1 = SPI-Boot, 0 (+GPIO8=1) = Joint-Download-Boot (USB-Serial-JTAG/UART/SDIO)",
-   "15": "JTAG-Signalquelle (floating, keine internen Pulls)"
+   "4": "MTMS: SDIO sample/drive edge (floating)",
+   "5": "MTDI: SDIO sample/drive edge (floating)",
+   "8": "ROM output; must be 1 for joint download boot (floating)",
+   "9": "Boot mode (weak pull-up, 1): 1 = SPI boot, 0 (+GPIO8=1) = joint download boot (USB-Serial-JTAG/UART/SDIO)",
+   "15": "JTAG signal source (floating, no internal pulls)"
   },
   "flash_psram_pins": {
-   "24": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt)",
-   "25": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt)",
-   "26": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt)",
-   "27": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt)",
-   "28": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt)",
-   "29": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt)",
-   "30": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt)"
+   "24": "SPI0/1 flash (permanently occupied on SiP flash variants)",
+   "25": "SPI0/1 flash (permanently occupied on SiP flash variants)",
+   "26": "SPI0/1 flash (permanently occupied on SiP flash variants)",
+   "27": "SPI0/1 flash (permanently occupied on SiP flash variants)",
+   "28": "SPI0/1 flash (permanently occupied on SiP flash variants)",
+   "29": "SPI0/1 flash (permanently occupied on SiP flash variants)",
+   "30": "SPI0/1 flash (permanently occupied on SiP flash variants)"
   },
   "input_only_pins": [],
   "usb_pins": {
@@ -763,12 +763,12 @@
    7
   ],
   "notes": [
-   "GPIO24-30 für SPI-Flash reserviert",
-   "SiP-Flash-Varianten (QFN32): GPIO10/11 nicht herausgeführt, nur 22 GPIO nutzbar; Varianten ohne In-Package-Flash: GPIO14 nicht herausgeführt",
-   "GPIO12/13 standardmäßig USB-Serial-JTAG; Umkonfiguration als GPIO deaktiviert USB-JTAG",
-   "LP-GPIO0-7 für Deep-Sleep-Wake, LP-Core und LP-Peripherie",
-   "BLE laut Datenblatt Bluetooth 5.3 certified; Wi-Fi 6 nur 2,4 GHz",
-   "Nur ADC1, kein Touch, kein DAC"
+   "GPIO24-30 reserved for SPI flash",
+   "SiP flash variants (QFN32): GPIO10/11 not bonded out, only 22 GPIOs usable; variants without in-package flash: GPIO14 not bonded out",
+   "GPIO12/13 are USB-Serial-JTAG by default; reconfiguring them as GPIO disables USB-JTAG",
+   "LP GPIO0-7 for deep-sleep wake, LP core and LP peripherals",
+   "BLE per datasheet Bluetooth 5.3 certified; Wi-Fi 6 2.4 GHz only",
+   "ADC1 only, no touch, no DAC"
   ],
   "sources": [
    "https://docs.espressif.com/projects/esp-idf/en/stable/esp32c6/api-reference/peripherals/gpio.html",
@@ -778,7 +778,7 @@
  },
  "esp32h2": {
   "name": "ESP32-H2",
-  "cpu": "RISC-V single-core bis 96 MHz",
+  "cpu": "RISC-V single-core up to 96 MHz",
   "cores": 1,
   "arch": "riscv",
   "sram_kb": 320,
@@ -794,20 +794,20 @@
   ],
   "gpio_missing": [],
   "strapping_pins": {
-   "2": "nur IDF als Strapping-Pin geführt; im Datenblatt v1.3 nicht",
-   "3": "nur IDF als Strapping-Pin geführt; im Datenblatt v1.3 nicht",
-   "8": "ROM-Ausgabe; muss für Joint-Download-Boot 1 sein (floating)",
-   "9": "Boot-Modus (weak pull-up, 1): 1 = SPI-Boot, 0 (+GPIO8=1) = Joint-Download-Boot (USB-Serial-JTAG/UART)",
-   "25": "JTAG-Signalquelle (floating)"
+   "2": "listed as a strapping pin by IDF only; not in datasheet v1.3",
+   "3": "listed as a strapping pin by IDF only; not in datasheet v1.3",
+   "8": "ROM output; must be 1 for joint download boot (floating)",
+   "9": "Boot mode (weak pull-up, 1): 1 = SPI boot, 0 (+GPIO8=1) = joint download boot (USB-Serial-JTAG/UART)",
+   "25": "JTAG signal source (floating)"
   },
   "flash_psram_pins": {
-   "15": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt, nicht herausgeführt)",
-   "16": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt, nicht herausgeführt)",
-   "17": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt, nicht herausgeführt)",
-   "18": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt, nicht herausgeführt)",
-   "19": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt, nicht herausgeführt)",
-   "20": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt, nicht herausgeführt)",
-   "21": "SPI0/1 Flash (bei SiP-Flash-Varianten fest belegt, nicht herausgeführt)"
+   "15": "SPI0/1 flash (permanently occupied on SiP flash variants, not bonded out)",
+   "16": "SPI0/1 flash (permanently occupied on SiP flash variants, not bonded out)",
+   "17": "SPI0/1 flash (permanently occupied on SiP flash variants, not bonded out)",
+   "18": "SPI0/1 flash (permanently occupied on SiP flash variants, not bonded out)",
+   "19": "SPI0/1 flash (permanently occupied on SiP flash variants, not bonded out)",
+   "20": "SPI0/1 flash (permanently occupied on SiP flash variants, not bonded out)",
+   "21": "SPI0/1 flash (permanently occupied on SiP flash variants, not bonded out)"
   },
   "input_only_pins": [],
   "usb_pins": {
@@ -848,15 +848,15 @@
    14
   ],
   "notes": [
-   "Kein Wi-Fi",
-   "Widerspruch Strapping-Pins: IDF nennt GPIO2, 3, 8, 9, 25; Datenblatt v1.3 nennt nur GPIO8, 9, 25",
-   "SiP-Flash-Varianten: GPIO15-21 für Flash belegt, GPIO6/7 nicht herausgeführt; nutzbar GPIO0-5, 8-14, 22-27 (19 GPIO)",
-   "GPIO7-14 wecken aus Deep-Sleep; GPIO7 ist RTC-GPIO, aber nicht herausgeführt",
-   "JTAG-Reihenfolge abweichend: GPIO3 = MTDO, GPIO5 = MTDI",
-   "GPIO26/27 standardmäßig USB-Serial-JTAG",
-   "BLE laut Datenblatt Bluetooth 5.3 certified",
-   "Analog-Comparator: GPIO10 Referenz, GPIO11 Eingang",
-   "Nur ADC1, kein Touch, kein DAC"
+   "No Wi-Fi",
+   "Contradiction on strapping pins: IDF lists GPIO2, 3, 8, 9, 25; datasheet v1.3 lists only GPIO8, 9, 25",
+   "SiP flash variants: GPIO15-21 occupied by flash, GPIO6/7 not bonded out; usable GPIO0-5, 8-14, 22-27 (19 GPIOs)",
+   "GPIO7-14 wake from deep sleep; GPIO7 is an RTC GPIO but not bonded out",
+   "Different JTAG order: GPIO3 = MTDO, GPIO5 = MTDI",
+   "GPIO26/27 are USB-Serial-JTAG by default",
+   "BLE per datasheet Bluetooth 5.3 certified",
+   "Analog comparator: GPIO10 reference, GPIO11 input",
+   "ADC1 only, no touch, no DAC"
   ],
   "sources": [
    "https://docs.espressif.com/projects/esp-idf/en/stable/esp32h2/api-reference/peripherals/gpio.html",
@@ -866,7 +866,7 @@
  },
  "esp32p4": {
   "name": "ESP32-P4",
-  "cpu": "RISC-V dual-core (HP) bis 400 MHz + LP-RISC-V single-core bis 40 MHz",
+  "cpu": "RISC-V dual-core (HP) up to 400 MHz + LP RISC-V single-core up to 40 MHz",
   "cores": 2,
   "arch": "riscv",
   "sram_kb": 768,
@@ -879,17 +879,17 @@
   ],
   "gpio_missing": [],
   "strapping_pins": {
-   "34": "JTAG-Signalquelle (floating)",
-   "35": "Boot-Modus (weak pull-up, 1): 1 = SPI-Boot, 0 (+GPIO36=1) = Joint-Download-Boot",
-   "36": "Boot-Modus und ROM-Ausgabe (floating)",
-   "37": "Boot-Steuerung (floating), zugleich UART0 TX",
-   "38": "Boot-Steuerung (floating), zugleich UART0 RX"
+   "34": "JTAG signal source (floating)",
+   "35": "Boot mode (weak pull-up, 1): 1 = SPI boot, 0 (+GPIO36=1) = joint download boot",
+   "36": "Boot mode and ROM output (floating)",
+   "37": "Boot control (floating), also UART0 TX",
+   "38": "Boot control (floating), also UART0 RX"
   },
   "flash_psram_pins": {},
   "input_only_pins": [],
   "usb_pins": {
-   "24": "D- (USB1P1_N0, standardmäßig USB-Serial-JTAG)",
-   "25": "D+ (USB1P1_P0, standardmäßig USB-Serial-JTAG)",
+   "24": "D- (USB1P1_N0, USB-Serial-JTAG by default)",
+   "25": "D+ (USB1P1_P0, USB-Serial-JTAG by default)",
    "26": "D- (USB1P1_N1)",
    "27": "D+ (USB1P1_P1)"
   },
@@ -960,15 +960,15 @@
    15
   ],
   "notes": [
-   "Kein integriertes Funkmodul (Wi-Fi/BLE nur über externen Co-Prozessor)",
-   "Flash an dedizierten Pins (FLASH_CS/CK/D/Q/WP/HOLD), keine GPIO; PSRAM (16/32 MB) im Package",
-   "USB 2.0 High-Speed OTG an dedizierten Pins USB_DP/USB_DM; Full-Speed OTG und USB-Serial-JTAG an GPIO24-27",
-   "UART0 (GPIO37/38) liegt auf Strapping-Pins",
-   "Touch-Nummerierung abweichend: IDF TOUCH0-13 an GPIO2-15, Datenblatt TOUCH_CHANNEL1-14",
+   "No integrated radio (Wi-Fi/BLE only via an external co-processor)",
+   "Flash on dedicated pins (FLASH_CS/CK/D/Q/WP/HOLD), not GPIOs; PSRAM (16/32 MB) in package",
+   "USB 2.0 high-speed OTG on dedicated pins USB_DP/USB_DM; full-speed OTG and USB-Serial-JTAG on GPIO24-27",
+   "UART0 (GPIO37/38) is on strapping pins",
+   "Different touch numbering: IDF TOUCH0-13 on GPIO2-15, datasheet TOUCH_CHANNEL1-14",
    "sram_kb = 768 KB HP L2MEM; rtc_ram_kb = 32 KB LP SRAM",
-   "Datenblatt ist Pre-release v0.7 (vorläufige Angaben)",
-   "LP-GPIO0-15 für Deep-Sleep-Wake, LP-Core und LP-Peripherie",
-   "Analog-Comparator an GPIO51-54"
+   "Datasheet is pre-release v0.7 (preliminary data)",
+   "LP GPIO0-15 for deep-sleep wake, LP core and LP peripherals",
+   "Analog comparator on GPIO51-54"
   ],
   "sources": [
    "https://docs.espressif.com/projects/esp-idf/en/stable/esp32p4/api-reference/peripherals/gpio.html",
@@ -979,7 +979,7 @@
  },
  "esp8266": {
   "name": "ESP8266 (ESP8266EX)",
-  "cpu": "Tensilica L106 32-bit single-core bis 160 MHz",
+  "cpu": "Tensilica L106 32-bit single-core up to 160 MHz",
   "cores": 1,
   "arch": "xtensa",
   "sram_kb": null,
@@ -994,17 +994,17 @@
   ],
   "gpio_missing": [],
   "strapping_pins": {
-   "0": "Boot-Modus: Low = ROM-Serial-Bootloader (Download), High = Start aus Flash",
-   "2": "muss High sein (Pull-up oder offen, interner weak pull-up); ROM gibt im Download-Modus UART-TX auf GPIO2 aus",
-   "15": "MTDO: muss Low sein (Pull-down/GND)"
+   "0": "Boot mode: low = ROM serial bootloader (download), high = boot from flash",
+   "2": "must be high (pull-up or open, internal weak pull-up); in download mode the ROM outputs UART TX on GPIO2",
+   "15": "MTDO: must be low (pull-down/GND)"
   },
   "flash_psram_pins": {
-   "6": "SPI-Flash (SDIO_CLK/SPI_CLK)",
-   "7": "SPI-Flash (SDIO_DATA_0/SPI_MISO)",
-   "8": "SPI-Flash (SDIO_DATA_1/SPI_MOSI)",
-   "9": "SPI-Flash (SDIO_DATA_2/SPIHD)",
-   "10": "SPI-Flash (SDIO_DATA_3/SPIWP)",
-   "11": "SPI-Flash (SDIO_CMD/SPI_CS0)"
+   "6": "SPI flash (SDIO_CLK/SPI_CLK)",
+   "7": "SPI flash (SDIO_DATA_0/SPI_MISO)",
+   "8": "SPI flash (SDIO_DATA_1/SPI_MOSI)",
+   "9": "SPI flash (SDIO_DATA_2/SPIHD)",
+   "10": "SPI flash (SDIO_DATA_3/SPIWP)",
+   "11": "SPI flash (SDIO_CMD/SPI_CS0)"
   },
   "input_only_pins": [],
   "usb_pins": {},
@@ -1029,16 +1029,16 @@
    16
   ],
   "notes": [
-   "ADC: nur ein 10-bit-SAR-ADC am Pin TOUT (Pin 6, kein GPIO, auf Modulen oft A0); Eingangsbereich 0-1,0 V; alternativ Messung von VDD3P3 – beides nicht gleichzeitig",
-   "GPIO16 (XPD_DCDC) für Deep-Sleep-Wake mit EXT_RSTB verbinden; GPIO16 nur mit internem Pull-down, übrige GPIO nur mit Pull-up",
-   "GPIO6-11 an SPI-Flash – nicht verwenden",
-   "GPIO0, GPIO2, GPIO15 (MTDO) bilden das 3-bit-Strapping für Boot- und SDIO-Modus",
-   "U0TXD darf beim Einschalten nicht extern auf Low gezogen werden",
-   "UART0 per Swap auf GPIO15 (TX/RTS) und GPIO13 (RX/CTS) umlegbar",
-   "jtag_pins = Pin-Namen laut Datenblatt; nicht verifiziert: JTAG-Debug-Unterstützung",
-   "nicht verifiziert: Gesamt-SRAM und RTC-RAM-Größe (Datenblatt nennt nur ca. 50 kB Heap+Data im Station-Modus)",
-   "Chip laut Datenblatt NRND, empfohlener Nachfolger ESP8684 (ESP32-C2)",
-   "Wi-Fi 802.11 b/g/n, nur HT20; kein Bluetooth; kein natives USB"
+   "ADC: only one 10-bit SAR ADC on pin TOUT (pin 6, not a GPIO, often A0 on modules); input range 0-1.0 V; alternatively measures VDD3P3 – not both at the same time",
+   "Connect GPIO16 (XPD_DCDC) to EXT_RSTB for deep-sleep wake; GPIO16 has only an internal pull-down, the other GPIOs only a pull-up",
+   "GPIO6-11 connected to SPI flash – do not use",
+   "GPIO0, GPIO2, GPIO15 (MTDO) form the 3-bit strapping for boot and SDIO mode",
+   "U0TXD must not be pulled low externally at power-on",
+   "UART0 can be swapped to GPIO15 (TX/RTS) and GPIO13 (RX/CTS)",
+   "jtag_pins = pin names per datasheet; not verified: JTAG debug support",
+   "not verified: total SRAM and RTC RAM size (datasheet only states approx. 50 kB heap+data in station mode)",
+   "Chip is NRND per datasheet, recommended successor ESP8684 (ESP32-C2)",
+   "Wi-Fi 802.11 b/g/n, HT20 only; no Bluetooth; no native USB"
   ],
   "sources": [
    "https://www.espressif.com/sites/default/files/documentation/0a-esp8266ex_datasheet_en.pdf (v7.1)",
@@ -1047,10 +1047,10 @@
   ],
   "pin_notes": {
    "16": [
-    "GPIO16 (XPD_DCDC): keine Interrupts, kein interner Pull-up (nur Pull-down); für Deep-Sleep-Wake mit RST verbinden."
+    "GPIO16 (XPD_DCDC): no interrupts, no internal pull-up (pull-down only); connect to RST for deep-sleep wake."
    ],
    "1": [
-    "TX0 – Boot-Log und Serial; beim Boot aktiv."
+    "TX0 – boot log and serial; active during boot."
    ]
   }
  }

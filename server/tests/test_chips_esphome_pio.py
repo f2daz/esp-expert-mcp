@@ -48,7 +48,7 @@ esphome:
 esp32:
   board: esp32-c3-devkitm-1
 wifi:
-  ssid: MeinNetz
+  ssid: MyNetwork
   password: !secret wifi_password
 api:
 ota:
@@ -77,11 +77,11 @@ def test_esphome_lint(tmp_path):
     assert r["variant"] == "esp32c3"
     msgs = " ".join(x["message"] for x in r["findings"])
     assert "wifi.ssid" in msgs and "wifi.password" not in msgs
-    assert "encryption" in msgs and "OTA ohne Absicherung" in msgs and "fastled_clockless" in msgs
-    assert r["pins_found"] == 4  # Expander-Pin ignoriert
+    assert "encryption" in msgs and "OTA unsecured" in msgs and "fastled_clockless" in msgs
+    assert r["pins_found"] == 4  # expander pin ignored
     pc = r["pin_check"]
-    assert "error" in levels(pc, 12)   # Flash-Pin
-    assert "warning" in levels(pc, 9)  # Strapping
+    assert "error" in levels(pc, 12)   # flash pin
+    assert "warning" in levels(pc, 9)  # strapping
 
 
 def test_yaml_loader_rejects_python_tags(tmp_path):
@@ -121,6 +121,6 @@ monitor_filters = esp8266_exception_decoder
     assert s3["chip"] == "esp32s3" and s3["partitions_path"].endswith("parts.csv")
     assert s3["monitor_speed"] == "115200"
     m = " ".join(f["message"] for f in s3["findings"])
-    assert "nicht reproduzierbar" in m and "PubSubClient" in m and "pioarduino" in m
-    assert d1["chip"] == "esp8266" and "gepinnt" in d1["platform_source"]
+    assert "not reproducible" in m and "PubSubClient" in m and "pioarduino" in m
+    assert d1["chip"] == "esp8266" and "pinned" in d1["platform_source"]
     assert not [f for f in d1["findings"] if f["level"] == "warning"]

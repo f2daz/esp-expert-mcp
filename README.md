@@ -1,79 +1,91 @@
 # esp-expert
 
-Claude-Code-Plugin für die Firmwareentwicklung auf Espressif-Chips (ESP8266, ESP32, ESP32-S2/S3, C2/C3/C5/C6, H2, P4). Es besteht aus zwei Teilen:
+A Claude Code plugin for firmware development on Espressif chips (ESP8266, ESP32, ESP32-S2/S3, C2/C3/C5/C6, H2, P4). It has two parts:
 
-- **Skill `esp-firmware`** mit der Arbeitsweise (erst Hardware klären, Konfiguration als Quelltext behandeln, erst nach erfolgreichem Build „fertig“ melden) und Fachreferenzen zu ESP-IDF, Arduino-Core, PlatformIO, ESPHome, ESP8266, FreeRTOS, Peripherie, Netzwerk, OTA, Speicher, Low-Power, Security, Debugging und Flashen, dazu Vorlagen.
-- **MCP-Server `esp-expert`** (Python, MCP-SDK 2.x) mit deterministischen Prüfwerkzeugen. Wo sich Daten ändern, fragt er live ab und rät keine Werte.
+- **Skill `esp-firmware`**: the working method (clarify the hardware first, treat configuration as source code, only report "done" after a successful build) plus reference guides for ESP-IDF, the Arduino core, PlatformIO, ESPHome, ESP8266, FreeRTOS, peripherals, networking, OTA, memory, low power, security, debugging and flashing. Also includes templates.
+- **MCP server `esp-expert`** (Python, MCP SDK 2.x): deterministic check tools. Anything that changes over time (versions, error tables) is queried live, not guessed.
 
-## Werkzeuge
+## Tools
 
-| Tool | Zweck |
+| Tool | Purpose |
 |---|---|
-| `chip_info` | SoC-Stammdaten: Kerne, RAM, Funk, USB, Strapping-, Flash- und Input-only-Pins, ADC, Touch, RTC-GPIO, Quellen |
-| `pin_check` | Prüft eine geplante GPIO-Belegung (Flash/PSRAM, Strapping, Input-only, USB, UART0, ADC2 + Wi-Fi, Doppelbelegung) |
-| `partition_validate` | Partitions-CSV: Ausrichtung, Überlappung, OTA-Layout, otadata/NVS, Flash-Größe, Reserve zum App-Binary |
-| `serial_log_analyze` | Reset-Grund, Guru Meditation, EXCCAUSE/MCAUSE, Stack-Overflow, WDT, Brownout, ESP8266-Exceptions; Backtrace per addr2line |
-| `esp_err_lookup` | esp_err_t → Name und Beschreibung (aus lokalem `$IDF_PATH` oder dem ESP-IDF-Repo) |
-| `sdkconfig_analyze` / `sdkconfig_get` | Zusammenfassung, riskante Einstellungen, Abweichungen zu `sdkconfig.defaults` |
-| `platformio_analyze` | `platformio.ini`: Environments, Plattform-Quelle und Pinning, Board → Chip, Partitionen, Artefakte |
-| `esphome_lint` / `esphome_validate` | ESPHome-YAML statisch prüfen bzw. per `esphome config` validieren |
-| `serial_ports` / `chip_probe` | Ports mit USB-Bridge-Erkennung; Chip, Flash und MAC per esptool (nur lesend) |
-| `framework_versions` / `idf_target_support` | Aktuelle Releases (GitHub, semantisch sortiert), IDF-Versionen je Target |
+| `chip_info` | SoC facts: cores, RAM, radio, USB, strapping/flash/input-only pins, ADC, touch, RTC GPIO, with sources |
+| `pin_check` | Checks a planned GPIO assignment: flash/PSRAM pins, strapping pins, input-only pins, USB, UART0, ADC2 with Wi-Fi, duplicate use |
+| `partition_validate` | Partition CSV: alignment, overlaps, OTA layout, otadata/NVS sizes, flash size, headroom for the app binary |
+| `serial_log_analyze` | Reset reason, Guru Meditation, EXCCAUSE/MCAUSE, stack overflow, WDT, brownout, ESP8266 exceptions; decodes the backtrace via addr2line |
+| `esp_err_lookup` | esp_err_t → name and description (from the local `$IDF_PATH` or the ESP-IDF repo) |
+| `sdkconfig_analyze` / `sdkconfig_get` | Summary, risky settings, drift from `sdkconfig.defaults` |
+| `platformio_analyze` | `platformio.ini`: environments, platform source and pinning, board → chip, partitions, build artifacts |
+| `esphome_lint` / `esphome_validate` | Static check of ESPHome YAML, or full validation via `esphome config` |
+| `serial_ports` / `chip_probe` | Serial ports with USB bridge detection; chip, flash size and MAC via esptool (read-only) |
+| `framework_versions` / `idf_target_support` | Current releases (GitHub, sorted by version number) and which ESP-IDF versions support which target |
 
-Geräte beschreiben (flash, erase, eFuse) kann der Server bewusst nicht. Das läuft über `idf.py`, `pio`, `arduino-cli`, `esphome` oder `esptool` in der Shell, jeweils nach Rückfrage.
+The server deliberately cannot write to devices (no flash, erase or eFuse). That is done in the shell with `idf.py`, `pio`, `arduino-cli`, `esphome` or `esptool`, and the skill asks for confirmation first.
 
 ## Installation
 
-Voraussetzung: [uv](https://docs.astral.sh/uv/). Python ≥ 3.11 installiert uv bei Bedarf selbst.
+Requires [uv](https://docs.astral.sh/uv/). uv installs Python ≥ 3.11 itself if needed.
 
-```bash
-# in Claude Code
-/plugin marketplace add /pfad/zu/esp-expert-mcp
+Inside Claude Code:
+
+```
+/plugin marketplace add f2daz/esp-expert-mcp
 /plugin install esp-expert@esp-expert
 ```
 
-Nur zum Ausprobieren, ohne Installation:
+From a local clone, pass the path to the cloned folder instead, for example:
 
-```bash
-claude --plugin-dir /pfad/zu/esp-expert-mcp
+```
+/plugin marketplace add ~/code/esp-expert-mcp
 ```
 
-MCP-Server einzeln, etwa für Claude Desktop oder andere MCP-Clients:
+To try it for one session without installing:
+
+```bash
+git clone https://github.com/f2daz/esp-expert-mcp
+claude --plugin-dir ./esp-expert-mcp
+```
+
+To run only the MCP server, for example in Claude Desktop or another MCP client:
 
 ```json
 {
   "mcpServers": {
     "esp-expert": {
       "command": "uv",
-      "args": ["run", "--quiet", "--directory", "/pfad/zu/esp-expert-mcp/server", "esp-expert-mcp"]
+      "args": ["run", "--quiet", "--directory", "/path/to/esp-expert-mcp/server", "esp-expert-mcp"]
     }
   }
 }
 ```
 
-Optionale Umgebungsvariablen:
-- `IDF_PATH`: Die Fehlercodes kommen dann aus der installierten ESP-IDF-Version.
-- `GITHUB_TOKEN`: Hebt das GitHub-Rate-Limit für `framework_versions` an.
+Optional environment variables:
+- `IDF_PATH`: take error codes from your installed ESP-IDF version.
+- `GITHUB_TOKEN`: raise the GitHub rate limit for `framework_versions`.
 
-Optionale Werkzeuge auf dem Rechner:
-- `esptool` für `chip_probe`
-- `esphome` (oder uvx) für `esphome_validate`
-- eine ESP-Toolchain (`*-addr2line`) zum Dekodieren von Backtraces
+Optional tools on your machine:
+- `esptool` for `chip_probe`
+- `esphome` (or `uvx`) for `esphome_validate`
+- an Espressif toolchain (`xtensa-esp-elf-addr2line`, `riscv32-esp-elf-addr2line`, or `xtensa-lx106-elf-addr2line` for ESP8266) for backtrace decoding. The server looks for it on `PATH` and under `~/.espressif/tools`, `~/.platformio/packages` and the Arduino15 folders.
 
-## Entwicklung
+## Development
 
 ```bash
 cd server
-uv run --group dev pytest        # Tests
-claude plugin validate ..        # Manifeste prüfen
+uv run --group dev pytest        # tests
+claude plugin validate ..        # check the manifests
 ```
 
-Chip-Daten: `server/src/esp_expert_mcp/data/chips.json`. Sie stammen aus den ESP-IDF-Seiten „GPIO & RTC GPIO“ und den Datenblättern von Espressif, die Quellen stehen je Chip im Feld `sources`. Wo sich Datenblatt und IDF-Doku widersprechen (ESP32-C5 und ESP32-H2 bei den Strapping-Pins), sind beide Angaben in `notes` bzw. `strapping_pins` vermerkt. Für den ESP32-P4 gibt es bisher nur ein Pre-release-Datenblatt.
+Chip data lives in `server/src/esp_expert_mcp/data/chips.json`. It was compiled from the ESP-IDF "GPIO & RTC GPIO" pages and the Espressif datasheets; each chip lists its sources in `sources`.
+- Where the datasheet and the IDF docs disagree (strapping pins of ESP32-C5 and ESP32-H2), both versions are recorded.
+- The ESP32-P4 datasheet is still a pre-release.
 
-## Herkunft
+Corrections with a source are welcome.
 
-Als Ideengeber dienten [adamlipecz/esp32-firmware-engineer-skill](https://github.com/adamlipecz/esp32-firmware-engineer-skill) (ESP-IDF, strenge Blocker-Regeln), [onigetoc/esp32-skill](https://github.com/onigetoc/esp32-skill) (Arduino-CLI-Workflow) und die [ESPHome-Doku](https://esphome.io/install/getting-started/). Beide Repos haben keine Lizenz. Deshalb wurden nur Struktur und Themen übernommen, alle Texte und der gesamte Code sind neu geschrieben.
+## Credits
 
-## Lizenz
+Inspired by [adamlipecz/esp32-firmware-engineer-skill](https://github.com/adamlipecz/esp32-firmware-engineer-skill) (ESP-IDF, strict blocking rules), [onigetoc/esp32-skill](https://github.com/onigetoc/esp32-skill) (Arduino CLI workflow) and the [ESPHome docs](https://esphome.io/install/getting-started/). Neither repository has a license, so only structure and topics were used as ideas; all text and code here are written from scratch.
 
-[MIT](LICENSE) – frei nutzbar, auch kommerziell; der Lizenzhinweis muss erhalten bleiben.
+## License
+
+[MIT](LICENSE): free to use, including commercially, as long as the license notice is kept.

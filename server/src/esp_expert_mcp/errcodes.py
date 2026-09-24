@@ -1,8 +1,8 @@
-"""esp_err_t-Lookup.
+"""esp_err_t lookup.
 
-Quelle ist die Tabelle esp_err_to_name.c aus ESP-IDF – bevorzugt aus der lokalen
-Installation ($IDF_PATH, damit sie zur genutzten Version passt), sonst aus dem
-GitHub-Repo (master). Ein kleiner Offline-Fallback deckt die häufigsten Codes ab.
+The source is the esp_err_to_name.c table from ESP-IDF – preferably from the local
+installation ($IDF_PATH, so it matches the version in use), otherwise from the
+GitHub repo (master). A small offline fallback covers the most common codes.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import os
 import re
 import urllib.request
 
-# Ab master (v6.1+) wird die Tabelle zur Link-Zeit erzeugt; release/v6.0 enthält sie noch als Quelltext.
+# From master (v6.1+) the table is generated at link time; release/v6.0 still contains it as source.
 REMOTE = "https://raw.githubusercontent.com/espressif/esp-idf/release/v6.0/components/esp_common/src/esp_err_to_name.c"
 LOCAL_REL = "components/esp_common/src/esp_err_to_name.c"
 
@@ -28,14 +28,14 @@ FALLBACK = {
 }
 
 HINTS = {
-    "ESP_ERR_NVS_NO_FREE_PAGES": "NVS-Partition voll oder Layout geändert: nvs_flash_erase() und erneut nvs_flash_init() (Standardmuster in IDF-Beispielen).",
-    "ESP_ERR_NVS_NEW_VERSION_FOUND": "NVS mit neuerem Format beschrieben: nvs_flash_erase() + nvs_flash_init().",
-    "ESP_ERR_NVS_NOT_INITIALIZED": "nvs_flash_init() fehlt oder schlug fehl – vor Wi-Fi/BLE aufrufen.",
-    "ESP_ERR_NO_MEM": "Heap erschöpft oder fragmentiert – heap_caps_get_largest_free_block() prüfen.",
-    "ESP_ERR_INVALID_STATE": "Treiber/Stack im falschen Zustand (doppelt initialisiert, nicht gestartet, falsche Reihenfolge).",
-    "ESP_ERR_TIMEOUT": "Gerät antwortet nicht – Verdrahtung, Pull-ups, Takt, Adresse, Timeout-Wert prüfen.",
-    "ESP_ERR_WIFI_NOT_INIT": "esp_wifi_init() fehlt.",
-    "ESP_ERR_WIFI_NOT_STARTED": "esp_wifi_start() fehlt oder wurde noch nicht abgeschlossen.",
+    "ESP_ERR_NVS_NO_FREE_PAGES": "NVS partition full or layout changed: nvs_flash_erase() and then nvs_flash_init() again (standard pattern in IDF examples).",
+    "ESP_ERR_NVS_NEW_VERSION_FOUND": "NVS was written with a newer format: nvs_flash_erase() + nvs_flash_init().",
+    "ESP_ERR_NVS_NOT_INITIALIZED": "nvs_flash_init() missing or failed – call it before Wi-Fi/BLE.",
+    "ESP_ERR_NO_MEM": "Heap exhausted or fragmented – check heap_caps_get_largest_free_block().",
+    "ESP_ERR_INVALID_STATE": "Driver/stack in the wrong state (initialized twice, not started, wrong order).",
+    "ESP_ERR_TIMEOUT": "Device not responding – check wiring, pull-ups, clock, address, timeout value.",
+    "ESP_ERR_WIFI_NOT_INIT": "esp_wifi_init() missing.",
+    "ESP_ERR_WIFI_NOT_STARTED": "esp_wifi_start() missing or not yet completed.",
 }
 
 _cache: dict[int, str] | None = None
@@ -59,7 +59,7 @@ def _load() -> tuple[dict[int, str], str]:
     idf = os.environ.get("IDF_PATH")
     if idf and os.path.isfile(os.path.join(idf, LOCAL_REL)):
         with open(os.path.join(idf, LOCAL_REL), encoding="utf-8") as fh:
-            _cache, _source = _parse(fh.read()), f"lokal: {idf}"
+            _cache, _source = _parse(fh.read()), f"local: {idf}"
     else:
         try:
             with urllib.request.urlopen(REMOTE, timeout=10) as r:
@@ -67,7 +67,7 @@ def _load() -> tuple[dict[int, str], str]:
         except OSError:
             _cache, _source = {}, ""
     if not _cache:
-        _cache, _source = dict(FALLBACK), "Offline-Fallback (Auswahl)"
+        _cache, _source = dict(FALLBACK), "offline fallback (subset)"
     return _cache, _source
 
 
@@ -85,7 +85,7 @@ def lookup(code: str | int) -> dict:
     name = table.get(value)
     res = {"code": value, "hex": hex(value), "name": name, "description": _desc.get(name or ""), "source": source}
     if name is None:
-        res["note"] = "Code nicht in der Tabelle – ggf. komponentenspezifisch (mbedTLS, lwIP errno) oder negativer HTTP-/TLS-Fehler."
+        res["note"] = "Code not in the table – possibly component-specific (mbedTLS, lwIP errno) or a negative HTTP/TLS error."
     elif name in HINTS:
         res["hint"] = HINTS[name]
     return res

@@ -1,4 +1,4 @@
-"""Auswertung von platformio.ini (espressif32/espressif8266, auch pioarduino)."""
+"""Evaluation of platformio.ini (espressif32/espressif8266, also pioarduino)."""
 
 from __future__ import annotations
 
@@ -19,18 +19,18 @@ def _chip(platform: str, board: str) -> str | None:
     for key, chip in BOARD_CHIP_HINTS:
         if re.search(rf"(^|[-_]|esp32){key}([-_]|$)", b):
             return chip
-    return "esp32 (Board-Definition prüfen: board_build.mcu)"
+    return "esp32 (check board definition: board_build.mcu)"
 
 
 def _platform_source(platform: str) -> str:
     p = platform.strip()
     if "pioarduino" in p:
-        return "pioarduino (Community, Arduino-Core 3.x / aktuelle ESP-IDF)"
+        return "pioarduino (community, Arduino core 3.x / current ESP-IDF)"
     if p.startswith(("http", "git", "file:")):
-        return "URL/Git – Stand über die URL gepinnt"
+        return "URL/Git – version pinned via the URL"
     if re.search(r"@\s*[~^]?\d", p) or re.search(r"espressif(32|8266)@", p):
-        return "PlatformIO-Registry, Version gepinnt"
-    return "PlatformIO-Registry, NICHT gepinnt"
+        return "PlatformIO registry, version pinned"
+    return "PlatformIO registry, NOT pinned"
 
 
 def _split(v: str) -> list[str]:
@@ -45,7 +45,7 @@ def analyze(ini_path: str) -> dict:
     try:
         cp.read(ini_path, encoding="utf-8")
     except configparser.Error as e:
-        return {"error": f"platformio.ini nicht lesbar: {e}"}
+        return {"error": f"platformio.ini not readable: {e}"}
 
     def val(sec: str, key: str, default: str = "") -> str:
         try:
@@ -66,18 +66,18 @@ def analyze(ini_path: str) -> dict:
             findings.append({"level": level, "message": msg})
 
         src = _platform_source(platform)
-        if "NICHT gepinnt" in src:
-            add("warning", "platform ohne Version – Builds sind nicht reproduzierbar (z. B. 'platform = espressif32@6.x.y' bzw. pioarduino-Release-URL).")
+        if "NOT pinned" in src:
+            add("warning", "platform without version – builds are not reproducible (e.g. 'platform = espressif32@6.x.y' or a pioarduino release URL).")
         if "espressif32" in platform and "pioarduino" not in platform and "arduino" in framework:
-            add("info", "Offizielle platformio/espressif32 liefert Arduino-Core 2.x. Für Core 3.x die pioarduino-Plattform nutzen "
-                        "(aktuellen Release über framework_versions('pioarduino-espressif32')).")
+            add("info", "The official platformio/espressif32 ships Arduino core 2.x. For core 3.x use the pioarduino platform "
+                        "(current release via framework_versions('pioarduino-espressif32')).")
         libs = _split(val(sec, "lib_deps"))
         unpinned = [l for l in libs if "@" not in l and not l.startswith(("http", "git", "file:", "symlink:"))]
         if unpinned:
-            add("warning", f"lib_deps ohne Version: {unpinned} – mit '@^x.y.z' pinnen.")
+            add("warning", f"lib_deps without version: {unpinned} – pin with '@^x.y.z'.")
         filters = _split(val(sec, "monitor_filters"))
         if "espressif" in platform and not any("exception_decoder" in f for f in filters):
-            add("info", "monitor_filters = esp32_exception_decoder (bzw. esp8266_exception_decoder) dekodiert Backtraces live.")
+            add("info", "monitor_filters = esp32_exception_decoder (or esp8266_exception_decoder) decodes backtraces live.")
         partitions = val(sec, "board_build.partitions")
         part_path = None
         if partitions:
@@ -85,9 +85,9 @@ def analyze(ini_path: str) -> dict:
             if os.path.isfile(cand):
                 part_path = cand
             elif not partitions.endswith(".csv") or "/" not in partitions:
-                add("info", f"Partitionstabelle {partitions!r} stammt vermutlich aus dem Framework (nicht im Projekt).")
+                add("info", f"Partition table {partitions!r} probably comes from the framework (not in the project).")
             else:
-                add("error", f"board_build.partitions verweist auf fehlende Datei {partitions}.")
+                add("error", f"board_build.partitions refers to missing file {partitions}.")
         build_dir = os.path.join(root, ".pio", "build", name)
         artifacts = {k: p for k, p in {
             "elf": os.path.join(build_dir, "firmware.elf"),
@@ -116,7 +116,7 @@ def analyze(ini_path: str) -> dict:
             "findings": findings,
         })
     if not envs:
-        return {"error": "Keine [env:…]-Sektion gefunden."}
+        return {"error": "No [env:…] section found."}
     return {
         "project_dir": root,
         "default_envs": default_envs,

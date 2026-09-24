@@ -1,109 +1,109 @@
 ---
 name: esp-firmware
-description: Firmwareentwicklung für Espressif-SoCs (ESP8266, ESP32, ESP32-S2/S3, C2/C3/C5/C6, H2, P4) mit ESP-IDF, Arduino-Core (arduino-cli), PlatformIO und ESPHome. Nutzen beim Schreiben, Reviewen und Debuggen von Firmware – FreeRTOS-Tasks, GPIO/I2C/SPI/UART/ADC/LEDC/RMT/TWAI, Wi-Fi/BLE/MQTT, NVS, OTA, Partitionstabellen, sdkconfig, Deep-Sleep, Secure Boot/Flash-Encryption –, beim Interpretieren von Serial-Logs, Guru-Meditation-Panics, Watchdog-/Brownout-Resets und ESP8266-Exceptions, bei Build-/Flash-/Upload-Fehlern („Failed to connect“, „invalid header“), bei Pinbelegung und Board-Bring-up sowie bei ESPHome-YAML-Konfigurationen.
+description: Firmware development for Espressif SoCs (ESP8266, ESP32, ESP32-S2/S3, C2/C3/C5/C6, H2, P4) with ESP-IDF, the Arduino core (arduino-cli), PlatformIO and ESPHome. Use when writing, reviewing and debugging firmware – FreeRTOS tasks, GPIO/I2C/SPI/UART/ADC/LEDC/RMT/TWAI, Wi-Fi/BLE/MQTT, NVS, OTA, partition tables, sdkconfig, deep sleep, Secure Boot/flash encryption –, when interpreting serial logs, Guru Meditation panics, watchdog/brownout resets and ESP8266 exceptions, for build/flash/upload errors ("Failed to connect", "invalid header"), for pin assignment and board bring-up, and for ESPHome YAML configurations.
 ---
 
-# ESP-Firmware
+# ESP Firmware
 
-Arbeite wie ein erfahrener Embedded-Entwickler für Espressif-Chips: erst die Hardware klären, dann Code; Konfiguration als Quelltext behandeln; nichts als erledigt melden, was nicht gebaut wurde.
+Work like an experienced embedded developer for Espressif chips: clarify the hardware first, then write code; treat configuration as source; never report anything as done that has not been built.
 
-## Werkzeuge (MCP-Server `esp-expert`)
+## Tools (MCP server `esp-expert`)
 
-| Aufgabe | Tool |
+| Task | Tool |
 |---|---|
-| Chip-Fakten (Pins, RAM, Funk, USB) | `chip_info` |
-| Geplante GPIO-Belegung prüfen | `pin_check` |
-| Aktuelle Versionen (IDF, Arduino-Core, ESPHome, esptool, pioarduino) | `framework_versions`, `idf_target_support` |
-| Crash-/Boot-Log auswerten, Backtrace dekodieren | `serial_log_analyze` |
-| esp_err_t übersetzen | `esp_err_lookup` |
-| Partitionstabelle | `partition_validate` |
+| Chip facts (pins, RAM, radio, USB) | `chip_info` |
+| Check a planned GPIO assignment | `pin_check` |
+| Current versions (IDF, Arduino core, ESPHome, esptool, pioarduino) | `framework_versions`, `idf_target_support` |
+| Analyze crash/boot log, decode backtrace | `serial_log_analyze` |
+| Translate esp_err_t | `esp_err_lookup` |
+| Partition table | `partition_validate` |
 | sdkconfig | `sdkconfig_analyze`, `sdkconfig_get` |
-| PlatformIO-Projekt | `platformio_analyze` |
-| ESPHome-YAML | `esphome_lint`, `esphome_validate` |
-| Angeschlossenes Board | `serial_ports`, `chip_probe` (liest nur, setzt Chip zurück) |
+| PlatformIO project | `platformio_analyze` |
+| ESPHome YAML | `esphome_lint`, `esphome_validate` |
+| Connected board | `serial_ports`, `chip_probe` (read-only, resets the chip) |
 
-Stehen die Tools nicht zur Verfügung, dieselben Prüfungen manuell anhand der Referenzen durchführen und das kenntlich machen.
+If the tools are not available, perform the same checks manually using the references and say so.
 
-**Versionen, Pinbelegungen und API-Details nie aus dem Gedächtnis behaupten.** Versionen über `framework_versions` holen, API-Doku über Context7 (`/espressif/esp-idf`, `/espressif/arduino-esp32`, `/esphome/esphome-docs`) oder docs.espressif.com. Das Wissen hier veraltet – ESPHome z. B. hat 2026 Standard-Framework (ESP-IDF statt Arduino) und Standard-Toolchain (native statt PlatformIO) gewechselt.
+**Never state versions, pin assignments or API details from memory.** Get versions via `framework_versions`, API docs via Context7 (`/espressif/esp-idf`, `/espressif/arduino-esp32`, `/esphome/esphome-docs`) or docs.espressif.com. The knowledge here goes stale – ESPHome, for example, switched its default framework (ESP-IDF instead of Arduino) and default toolchain (native instead of PlatformIO) in 2026.
 
-## Vorgehen
+## Procedure
 
-1. **Einordnen:** Schreiben, Review, Debugging oder Bring-up? Welches Framework (ESP-IDF / Arduino / PlatformIO / ESPHome)? Im Projekt nachsehen: `CMakeLists.txt` + `sdkconfig` ⇒ ESP-IDF; `platformio.ini` ⇒ PlatformIO; `*.ino`/`sketch.yaml` ⇒ Arduino; YAML mit `esphome:` ⇒ ESPHome.
-2. **Pflichtkontext klären (siehe unten).** Fehlt bei hardwarenaher Arbeit etwas davon, gezielt nachfragen statt raten.
-3. **Minimal lesen:** Einstiegspunkt (`app_main`, `setup/loop`), betroffene Komponente, Build-Konfiguration, Partitions-CSV, Logs.
-4. **Passende Referenz laden** (Tabelle unten) – nur die benötigte.
-5. **Umsetzen** in kleinen, reviewbaren Schritten im Stil des Projekts.
-6. **Bauen** mit dem Projekt-Workflow (`idf.py build`, `pio run -e <env>`, `arduino-cli compile`, `esphome compile`). Fehler und relevante Warnungen beheben, erneut bauen.
-7. **Berichten:** Was geändert wurde, wichtige Entscheidungen, wie validiert – und ausdrücklich, was **nicht auf Hardware geprüft** ist.
+1. **Classify:** Writing, review, debugging or bring-up? Which framework (ESP-IDF / Arduino / PlatformIO / ESPHome)? Check the project: `CMakeLists.txt` + `sdkconfig` ⇒ ESP-IDF; `platformio.ini` ⇒ PlatformIO; `*.ino`/`sketch.yaml` ⇒ Arduino; YAML with `esphome:` ⇒ ESPHome.
+2. **Clarify required context (see below).** If any of it is missing for hardware-related work, ask specifically instead of guessing.
+3. **Read minimally:** entry point (`app_main`, `setup/loop`), affected component, build configuration, partition CSV, logs.
+4. **Load the matching reference** (table below) – only the one needed.
+5. **Implement** in small, reviewable steps in the project's style.
+6. **Build** with the project workflow (`idf.py build`, `pio run -e <env>`, `arduino-cli compile`, `esphome compile`). Fix errors and relevant warnings, build again.
+7. **Report:** what was changed, key decisions, how it was validated – and explicitly what has **not been tested on hardware**.
 
-## Pflichtkontext bei hardwarenaher Arbeit
+## Required context for hardware-related work
 
-- **Exaktes Target** (`esp32`, `esp32s3`, `esp32c3`, `esp8266` …) – „ESP32“ allein reicht nicht; Kerne, Peripherie, Pins, ADC und Sleep unterscheiden sich. Ggf. mit `chip_probe` ermitteln.
-- **Modul/Board** (z. B. ESP32-S3-WROOM-1-N16R8, Wemos D1 mini) – bestimmt Flash-Größe, PSRAM und dadurch belegte Pins.
-- **Framework und Version** (ESP-IDF 5.x vs. 6.x, Arduino-Core 2.x vs. 3.x) – APIs haben sich deutlich geändert.
-- **Pinbelegung und Beschaltung** der angeschlossenen Hardware: Pull-ups, Pegel (3,3 V!), Versorgung, Pegelwandler, Transceiver. Vor dem Festlegen `pin_check` laufen lassen.
-- **Flash-Größe, OTA-Bedarf, Datenpartitionen** – bevor Partitionen geändert werden.
+- **Exact target** (`esp32`, `esp32s3`, `esp32c3`, `esp8266` …) – "ESP32" alone is not enough; cores, peripherals, pins, ADC and sleep differ. Determine with `chip_probe` if needed.
+- **Module/board** (e.g. ESP32-S3-WROOM-1-N16R8, Wemos D1 mini) – determines flash size, PSRAM and therefore occupied pins.
+- **Framework and version** (ESP-IDF 5.x vs. 6.x, Arduino core 2.x vs. 3.x) – APIs have changed significantly.
+- **Pin assignment and circuitry** of the connected hardware: pull-ups, logic levels (3.3 V!), power supply, level shifters, transceivers. Run `pin_check` before settling on pins.
+- **Flash size, OTA requirements, data partitions** – before partitions are changed.
 
-Reines Review/Refactoring ohne Hardwareänderung: fehlenden Kontext als Risiko benennen, aber im gegebenen Code-Umfang weiterarbeiten.
+Pure review/refactoring without hardware changes: name missing context as a risk, but continue working within the given code scope.
 
-## Grundregeln für Firmware
+## Firmware ground rules
 
-- **ISR minimal**, nur ISR-sichere APIs (`…FromISR`), Arbeit per Queue/Task-Notification in Tasks verlagern. ISR und von ihr aufgerufene Funktionen in IRAM (`IRAM_ATTR`), wenn sie während Flash-Operationen laufen können.
-- **Fehler prüfen:** `esp_err_t` auswerten und mit Kontext loggen; `ESP_ERROR_CHECK` nur, wo ein Abbruch wirklich gewollt ist.
-- **Keine Blockade ohne Timeout;** kein Busy-Wait ohne `vTaskDelay`/`yield()` (Task-WDT, ESP8266-Soft-WDT).
-- **Speicher:** Stackgrößen bewusst wählen und mit `uxTaskGetStackHighWaterMark` messen; keine großen Puffer auf dem Stack; DMA-Puffer mit `MALLOC_CAP_DMA`; Heap-Churn in heißen Pfaden vermeiden.
-- **Init-Reihenfolge:** NVS → netif/Event-Loop → Wi-Fi/BLE → Treiber → Anwendungs-Tasks. Teil-Init-Fehler sauber zurückrollen.
-- **Konfiguration reproduzierbar:** `sdkconfig.defaults` (ggf. `sdkconfig.defaults.<target>`) statt Klickanleitungen für menuconfig; `sdkconfig` ist generiert.
-- **Partitionen passend zum Flash:** kein unerklärt ungenutzter Flash; mit OTA zwei gleich große Slots + `otadata`.
-- **Logging:** stabile Tags je Modul, Zustandswechsel und Fehlercodes loggen; laute Fremdkomponenten per `esp_log_level_set` dämpfen statt global abzuschalten.
-- **Secrets** nie im Code oder Repo (ESPHome: `!secret`; ESP-IDF: NVS/Provisioning; Arduino: nicht eingecheckte Header).
-- **Kommentare** nur für nicht offensichtliche Timing-, Register- oder Nebenläufigkeitsdetails.
+- **Keep ISRs minimal**, only ISR-safe APIs (`…FromISR`), defer work to tasks via queue/task notification. Place ISRs and functions they call in IRAM (`IRAM_ATTR`) if they can run during flash operations.
+- **Check errors:** evaluate `esp_err_t` and log with context; use `ESP_ERROR_CHECK` only where an abort is really intended.
+- **No blocking without a timeout;** no busy-wait without `vTaskDelay`/`yield()` (task WDT, ESP8266 soft WDT).
+- **Memory:** choose stack sizes deliberately and measure with `uxTaskGetStackHighWaterMark`; no large buffers on the stack; DMA buffers with `MALLOC_CAP_DMA`; avoid heap churn in hot paths.
+- **Init order:** NVS → netif/event loop → Wi-Fi/BLE → drivers → application tasks. Roll back cleanly on partial init failures.
+- **Reproducible configuration:** `sdkconfig.defaults` (possibly `sdkconfig.defaults.<target>`) instead of click-through instructions for menuconfig; `sdkconfig` is generated.
+- **Partitions matching the flash:** no unexplained unused flash; with OTA, two equally sized slots + `otadata`.
+- **Logging:** stable tags per module, log state transitions and error codes; quiet noisy third-party components with `esp_log_level_set` instead of disabling logging globally.
+- **Secrets** never in code or the repo (ESPHome: `!secret`; ESP-IDF: NVS/provisioning; Arduino: headers not checked in).
+- **Comments** only for non-obvious timing, register or concurrency details.
 
-## Review-Schwerpunkte
+## Review focus
 
-Korrektheit vor Stil. Findings zuerst, mit Datei:Zeile, nach Schwere sortiert:
-ISR-/Task-Kontext der APIs · Race Conditions auf geteiltem Zustand · Blockierende Aufrufe und Timeouts · Stack-/Heap-Risiken und Puffer-Lebensdauer über Task-Grenzen · Ressourcen-Lebenszyklus (Treiber, Sockets, Event-Handler, Semaphoren) · Pin-Konflikte, Strapping-Pins · Watchdog-Exposition · sdkconfig/Partitionen konsistent mit Flash und Features · Fehlerpfade · Log-Qualität für Felddiagnose.
+Correctness before style. Findings first, with file:line, sorted by severity:
+ISR/task context of APIs · race conditions on shared state · blocking calls and timeouts · stack/heap risks and buffer lifetime across task boundaries · resource lifecycle (drivers, sockets, event handlers, semaphores) · pin conflicts, strapping pins · watchdog exposure · sdkconfig/partitions consistent with flash and features · error paths · log quality for field diagnostics.
 
 ## Debugging
 
-- Phase eingrenzen: **Build → Flash → Boot → Init → Laufzeit** (bzw. Sleep/Wake, Netzwerk, Peripherie).
-- Vollständigen Log ab Reset besorgen, dazu die **passende ELF**; mit `serial_log_analyze` auswerten.
-- Erst instrumentieren (Logs, Zähler, Asserts, Heap-/Stack-Messung), dann ändern. Eine Änderung pro Iteration.
-- Bei Hardware-Verdacht: Versorgung (Brownout!), Kabel, Pegel, Pull-ups, Strapping-Pins zuerst.
-- Reichen Symptome nicht: minimales Reproduktionsbeispiel oder funktionierenden Referenzcode anfragen.
+- Narrow down the phase: **Build → Flash → Boot → Init → Runtime** (or sleep/wake, network, peripherals).
+- Obtain the complete log from reset, plus the **matching ELF**; analyze with `serial_log_analyze`.
+- Instrument first (logs, counters, asserts, heap/stack measurement), then change. One change per iteration.
+- If hardware is suspected: check power supply (brownout!), cables, logic levels, pull-ups, strapping pins first.
+- If the symptoms are not enough: ask for a minimal reproduction or working reference code.
 
-## Flashen und serielle Verbindung
+## Flashing and serial connection
 
-- Flashen und Löschen verändern das Gerät: **vor `flash`/`upload`/`erase-flash` bestätigen lassen**, sofern der Nutzer es nicht ausdrücklich angeordnet hat. `erase-flash` löscht auch NVS (Wi-Fi-Daten, Kalibrierung). eFuse-Befehle (`espefuse`) und Security-Aktivierung sind **irreversibel** – nur nach ausdrücklicher Freigabe.
-- Port mit `serial_ports` bestimmen; macOS: `/dev/cu.*`. Monitor vor dem Flashen schließen.
-- Details und Fehlerbilder: `references/flashing-and-serial.md`.
+- Flashing and erasing modify the device: **get confirmation before `flash`/`upload`/`erase-flash`**, unless the user has explicitly instructed it. `erase-flash` also erases NVS (Wi-Fi credentials, calibration). eFuse commands (`espefuse`) and security activation are **irreversible** – only after explicit approval.
+- Determine the port with `serial_ports`; macOS: `/dev/cu.*`. Close the monitor before flashing.
+- Details and failure patterns: `references/flashing-and-serial.md`.
 
-## Referenzen (bei Bedarf laden)
+## References (load as needed)
 
-| Thema | Datei |
+| Topic | File |
 |---|---|
-| ESP-IDF: Projektstruktur, idf.py, Komponenten, sdkconfig, Migration 5→6 | `references/esp-idf.md` |
-| Arduino-Core ESP32 (3.x) und ESP8266, arduino-cli | `references/arduino.md` |
+| ESP-IDF: project structure, idf.py, components, sdkconfig, migration 5→6 | `references/esp-idf.md` |
+| Arduino core ESP32 (3.x) and ESP8266, arduino-cli | `references/arduino.md` |
 | PlatformIO (espressif32/8266, pioarduino) | `references/platformio.md` |
-| ESPHome: CLI, YAML, Framework/Toolchain, eigene Komponenten | `references/esphome.md` |
-| ESP8266-Besonderheiten | `references/esp8266.md` |
-| FreeRTOS, ISR, Nebenläufigkeit, Watchdogs | `references/rtos.md` |
-| Peripherie: GPIO, I2C, SPI, UART, ADC, LEDC, RMT, TWAI | `references/peripherals.md` |
-| Wi-Fi, BLE, MQTT, HTTP, Provisioning | `references/networking.md` |
-| Partitionen, NVS, OTA, Rollback | `references/partitions-ota.md` |
-| Speicher und Codegröße | `references/memory.md` |
-| Low-Power, Sleep, Wakeup | `references/power.md` |
-| Secure Boot, Flash-Encryption, Produktion | `references/security.md` |
-| Panic-, Reset- und Log-Triage, Core-Dump, JTAG | `references/debugging.md` |
-| Flashen, esptool, Boot-Modi, Verbindungsfehler | `references/flashing-and-serial.md` |
+| ESPHome: CLI, YAML, framework/toolchain, custom components | `references/esphome.md` |
+| ESP8266 specifics | `references/esp8266.md` |
+| FreeRTOS, ISR, concurrency, watchdogs | `references/rtos.md` |
+| Peripherals: GPIO, I2C, SPI, UART, ADC, LEDC, RMT, TWAI | `references/peripherals.md` |
+| Wi-Fi, BLE, MQTT, HTTP, provisioning | `references/networking.md` |
+| Partitions, NVS, OTA, rollback | `references/partitions-ota.md` |
+| Memory and code size | `references/memory.md` |
+| Low power, sleep, wakeup | `references/power.md` |
+| Secure Boot, flash encryption, production | `references/security.md` |
+| Panic, reset and log triage, core dump, JTAG | `references/debugging.md` |
+| Flashing, esptool, boot modes, connection errors | `references/flashing-and-serial.md` |
 
-## Vorlagen
+## Templates
 
-`templates/` enthält Startpunkte, die an Target, Board und Anforderungen angepasst werden müssen:
-`esp-idf-app/` (main mit Fehlerbehandlung, CMake, sdkconfig.defaults), `partitions/` (OTA-Layouts 4/8/16 MB), `platformio.ini`, `esphome-device.yaml`, `arduino-sketch.yaml`.
+`templates/` contains starting points that must be adapted to target, board and requirements:
+`esp-idf-app/` (main with error handling, CMake, sdkconfig.defaults), `partitions/` (OTA layouts 4/8/16 MB), `platformio.ini`, `esphome-device.yaml`, `arduino-sketch.yaml`.
 
-## Ausgabeformat
+## Output format
 
-- **Implementierung:** Änderung → wesentliche Entscheidungen → Validierung (Build-Ergebnis) → offene Hardwaretests.
-- **Review:** Findings nach Schwere → Annahmen/offene Fragen.
-- **Debugging:** wahrscheinliche Ursachen mit Belegen aus dem Log → nächster Diagnoseschritt → Fix-Vorschlag.
+- **Implementation:** change → key decisions → validation (build result) → pending hardware tests.
+- **Review:** findings by severity → assumptions/open questions.
+- **Debugging:** likely causes with evidence from the log → next diagnostic step → proposed fix.

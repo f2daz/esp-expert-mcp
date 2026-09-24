@@ -1,6 +1,6 @@
-# ESP-IDF, 16 MB Flash, OTA mit Rollback, großes Dateisystem (z. B. Web-UI, Assets).
-# Tabellenoffset auf 0x10000 angehoben (CONFIG_PARTITION_TABLE_OFFSET=0x10000),
-# damit ein größerer Bootloader (Secure Boot, Debug-Log) Platz hat.
+# ESP-IDF, 16 MB flash, OTA with rollback, large filesystem (e.g. web UI, assets).
+# Table offset raised to 0x10000 (CONFIG_PARTITION_TABLE_OFFSET=0x10000)
+# so a larger bootloader (secure boot, debug logging) fits.
 # Name,    Type, SubType,  Offset,   Size
 nvs,       data, nvs,      0x11000,  0x6000
 otadata,   data, ota,      0x17000,  0x2000

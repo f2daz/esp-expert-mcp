@@ -1,40 +1,40 @@
 # PlatformIO
 
-Projekt mit `platformio_analyze` prüfen lassen (Plattform, Pinning, Partitionen, Flags). Aktuelle Plattform-/Core-Versionen über `framework_versions`.
+Have the project checked with `platformio_analyze` (platform, pinning, partitions, flags). Current platform/core versions via `framework_versions`.
 
-## Plattformen für Espressif
+## Platforms for Espressif
 
-| Plattform | `platform =` | Stand |
+| Platform | `platform =` | Status |
 |---|---|---|
-| Offiziell (PlatformIO) | `espressif32` | Arduino-Framework nur Core **2.x**; Arduino Core 3.x wird offiziell nicht unterstützt (Stand der Community-Diskussion, vor Einsatz prüfen) |
-| pioarduino (Community) | `https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip` | Arduino Core **3.x** + aktuelles ESP-IDF 5.x; neuere Chips (C5, C6, H2, P4 …) |
-| ESP8266 | `espressif8266` | Arduino-ESP8266-Core bzw. ESP8266_RTOS_SDK |
+| Official (PlatformIO) | `espressif32` | Arduino framework only core **2.x**; Arduino core 3.x is not officially supported (per the community discussion, verify before use) |
+| pioarduino (community) | `https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip` | Arduino core **3.x** + current ESP-IDF 5.x; newer chips (C5, C6, H2, P4 …) |
+| ESP8266 | `espressif8266` | Arduino ESP8266 core or ESP8266_RTOS_SDK |
 
-- Für neue ESP32-Arduino-Projekte ist damit faktisch **pioarduino** nötig, wenn Core 3.x gebraucht wird. Board-Definitionen dort werden laut README nicht von den Maintainern repariert – PRs gegen `develop`.
-- Welche Core-/IDF-Version eine pioarduino-Release enthält, steht in den Release Notes (https://github.com/pioarduino/platform-espressif32/releases) – nicht raten.
+- For new ESP32 Arduino projects, **pioarduino** is therefore effectively required if core 3.x is needed. According to the README, board definitions there are not fixed by the maintainers – PRs against `develop`.
+- Which core/IDF version a pioarduino release contains is stated in the release notes (https://github.com/pioarduino/platform-espressif32/releases) – do not guess.
 
-### Versionspinning (Pflicht für reproduzierbare Builds)
+### Version pinning (mandatory for reproducible builds)
 
 ```ini
-; offizielle Plattform: Version pinnen
+; official platform: pin the version
 platform = espressif32@6.x.y
-; pioarduino: konkretes Release statt "stable"
+; pioarduino: a specific release instead of "stable"
 platform = https://github.com/pioarduino/platform-espressif32/releases/download/<tag>/platform-espressif32.zip
-; Bibliotheken pinnen
+; pin libraries
 lib_deps =
     knolleary/PubSubClient@^2.8
     bblanchon/ArduinoJson@7.x.y
 ```
-- `stable`-URL und unversionierte `lib_deps` ändern sich unbemerkt → Build bricht irgendwann oder verhält sich anders.
-- Framework-Paket gezielt überschreiben mit `platform_packages` nur, wenn nötig und dokumentiert.
+- The `stable` URL and unversioned `lib_deps` change unnoticed → the build eventually breaks or behaves differently.
+- Override the framework package with `platform_packages` only when necessary and documented.
 
-## platformio.ini – Aufbau
+## platformio.ini – structure
 
 ```ini
 [platformio]
 default_envs = s3
 
-[env]                                   ; gemeinsame Einstellungen
+[env]                                   ; shared settings
 framework = arduino
 monitor_speed = 115200
 monitor_filters = esp32_exception_decoder, time
@@ -69,52 +69,52 @@ build_flags =
 
 ### board_build.* / board_upload.*
 
-| Option | Bedeutung |
+| Option | Meaning |
 |---|---|
-| `board_build.partitions` | Partitions-CSV (Projektpfad oder Name aus dem Framework); mit `partition_validate` prüfen |
-| `board_build.filesystem` | `spiffs` (Default), `littlefs`, `fatfs` – muss zum Code und zur Partition passen |
-| `board_build.flash_mode` | `qio`, `qout`, `dio`, `dout` (OPI-Module: Board-Definition prüfen) |
-| `board_build.f_flash` | Flash-Takt, z. B. `80000000L` |
-| `board_build.f_cpu` | CPU-Takt, z. B. `240000000L` |
-| `board_build.mcu` | Chip, z. B. `esp32s3` (normalerweise aus Board-JSON) |
-| `board_build.embed_files` / `embed_txtfiles` | Dateien in die Firmware einbetten |
-| `board_upload.flash_size` | Flash-Größe, z. B. `16MB` – an reales Modul anpassen |
-| `board_upload.maximum_size` | Max. App-Größe (muss zur App-Partition passen) |
-| `board_build.arduino.memory_type` | z. B. `qio_opi` für S3 mit Octal-PSRAM (prüfen) |
+| `board_build.partitions` | Partition CSV (project path or name from the framework); check with `partition_validate` |
+| `board_build.filesystem` | `spiffs` (default), `littlefs`, `fatfs` – must match the code and the partition |
+| `board_build.flash_mode` | `qio`, `qout`, `dio`, `dout` (OPI modules: check the board definition) |
+| `board_build.f_flash` | Flash clock, e.g. `80000000L` |
+| `board_build.f_cpu` | CPU clock, e.g. `240000000L` |
+| `board_build.mcu` | Chip, e.g. `esp32s3` (normally from the board JSON) |
+| `board_build.embed_files` / `embed_txtfiles` | Embed files in the firmware |
+| `board_upload.flash_size` | Flash size, e.g. `16MB` – adjust to the actual module |
+| `board_upload.maximum_size` | Max. app size (must match the app partition) |
+| `board_build.arduino.memory_type` | e.g. `qio_opi` for S3 with octal PSRAM (verify) |
 
-- Board-JSON beschreibt oft nur das Devkit mit 4 MB/ohne PSRAM – bei N8R8/N16R8-Modulen Flash-Größe, PSRAM und Speichertyp selbst setzen.
+- The board JSON often only describes the devkit with 4 MB/without PSRAM – for N8R8/N16R8 modules, set flash size, PSRAM and memory type yourself.
 
-### build_flags (Auswahl)
+### build_flags (selection)
 
-- `-DBOARD_HAS_PSRAM` – PSRAM im Arduino-Core aktivieren (bei ESP32-WROVER/S3-R-Modulen).
-- `-DCORE_DEBUG_LEVEL=0…5` – Arduino-Logausgabe (`log_e` … `log_v`).
-- `-DARDUINO_USB_CDC_ON_BOOT=1` – `Serial` auf nativem USB (S2/S3/C3/C6).
-- `-DARDUINO_USB_MODE=1` – Hardware-CDC/JTAG statt TinyUSB (S3).
-- Warnungen: `build_unflags = -Werror=…` nur gezielt; Warnungen lieber beheben.
-- Secrets nicht in `platformio.ini` einchecken; `-DWIFI_PASS=\"${sysenv.WIFI_PASS}\"` oder eine lokale, ignorierte `secrets.ini` via `extra_configs`.
+- `-DBOARD_HAS_PSRAM` – enable PSRAM in the Arduino core (for ESP32-WROVER/S3-R modules).
+- `-DCORE_DEBUG_LEVEL=0…5` – Arduino log output (`log_e` … `log_v`).
+- `-DARDUINO_USB_CDC_ON_BOOT=1` – `Serial` on native USB (S2/S3/C3/C6).
+- `-DARDUINO_USB_MODE=1` – hardware CDC/JTAG instead of TinyUSB (S3).
+- Warnings: use `build_unflags = -Werror=…` only selectively; better to fix the warnings.
+- Do not check secrets into `platformio.ini`; use `-DWIFI_PASS=\"${sysenv.WIFI_PASS}\"` or a local, ignored `secrets.ini` via `extra_configs`.
 
-## Befehle
+## Commands
 
-| Befehl | Zweck |
+| Command | Purpose |
 |---|---|
-| `pio run` / `pio run -e s3` | Bauen (alle bzw. ein Env) |
-| `pio run -e s3 -t upload` | Flashen (bestätigen lassen) |
-| `pio run -e s3 -t upload --upload-port /dev/cu.usbmodem1101` | mit Port |
-| `pio run -e s3 -t buildfs` / `-t uploadfs` | Dateisystem-Image bauen / flashen (überschreibt FS-Inhalt) |
-| `pio run -e s3 -t erase` | **Flash komplett löschen** – nur nach Freigabe |
-| `pio run -e s3 -t clean` | Build-Verzeichnis des Envs löschen |
-| `pio run -e idf -t menuconfig` | menuconfig (nur Framework `espidf`) |
-| `pio run -e s3 -t size` | Größenübersicht (prüfen, ob Target je Plattform verfügbar) |
-| `pio device list` | Serielle Ports |
-| `pio device monitor -e s3` | Monitor mit Filtern aus dem Env |
-| `pio check -e s3` | Statische Analyse (cppcheck/clang-tidy) |
-| `pio test -e s3` | Unit-Tests (Unity) auf Target oder `native` |
-| `pio pkg update` | Pakete aktualisieren – bricht Pinning, bewusst einsetzen |
+| `pio run` / `pio run -e s3` | Build (all or one env) |
+| `pio run -e s3 -t upload` | Flash (get confirmation) |
+| `pio run -e s3 -t upload --upload-port /dev/cu.usbmodem1101` | with port |
+| `pio run -e s3 -t buildfs` / `-t uploadfs` | Build / flash filesystem image (overwrites FS contents) |
+| `pio run -e s3 -t erase` | **Erase flash completely** – only after approval |
+| `pio run -e s3 -t clean` | Delete the env's build directory |
+| `pio run -e idf -t menuconfig` | menuconfig (framework `espidf` only) |
+| `pio run -e s3 -t size` | Size overview (verify the target is available per platform) |
+| `pio device list` | Serial ports |
+| `pio device monitor -e s3` | Monitor with filters from the env |
+| `pio check -e s3` | Static analysis (cppcheck/clang-tidy) |
+| `pio test -e s3` | Unit tests (Unity) on target or `native` |
+| `pio pkg update` | Update packages – breaks pinning, use deliberately |
 
-- Monitorfilter: `esp32_exception_decoder` bzw. `esp8266_exception_decoder` dekodieren Backtraces gegen die ELF des gebauten Envs – nur korrekt, wenn genau diese Firmware läuft. Weitere: `time`, `log2file`, `default`, `direct`.
-- ELF liegt unter `.pio/build/<env>/firmware.elf` – für `serial_log_analyze` verwenden.
+- Monitor filters: `esp32_exception_decoder` and `esp8266_exception_decoder` decode backtraces against the ELF of the built env – only correct if exactly this firmware is running. Others: `time`, `log2file`, `default`, `direct`.
+- The ELF is located at `.pio/build/<env>/firmware.elf` – use it for `serial_log_analyze`.
 
-## ESP-IDF-Framework unter PlatformIO
+## ESP-IDF framework under PlatformIO
 
 ```ini
 [env:idf]
@@ -125,20 +125,20 @@ board_build.partitions = partitions.csv
 board_build.cmake_extra_args =
     -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.prod"
 ```
-- Projektstruktur wie ESP-IDF: `src/` (statt `main/`) mit eigenem `CMakeLists.txt`, Top-Level-`CMakeLists.txt`, optional `components/`.
-- PlatformIO erzeugt je Env **`sdkconfig.<env>`** (z. B. `sdkconfig.idf`). Diese Datei ist generiert; Quelle der Wahrheit ist `sdkconfig.defaults`. Eigener Pfad: `board_build.esp-idf.sdkconfig_path`.
-- IDF-Version hängt an der Plattformversion – vor IDF-Migration prüfen, welche IDF-Version die Plattform liefert (`framework_versions`, Plattform-Release-Notes).
-- `idf_component.yml` in `src/` wird vom Component Manager ausgewertet (prüfen, je Plattformversion).
-- Arduino + ESP-IDF gemeinsam: `framework = arduino, espidf` (pioarduino; sdkconfig-Anforderungen des Arduino-Cores beachten, u. a. `CONFIG_FREERTOS_HZ=1000`).
+- Project structure as in ESP-IDF: `src/` (instead of `main/`) with its own `CMakeLists.txt`, top-level `CMakeLists.txt`, optional `components/`.
+- PlatformIO generates **`sdkconfig.<env>`** per env (e.g. `sdkconfig.idf`). This file is generated; the source of truth is `sdkconfig.defaults`. Custom path: `board_build.esp-idf.sdkconfig_path`.
+- The IDF version depends on the platform version – before an IDF migration, check which IDF version the platform ships (`framework_versions`, platform release notes).
+- `idf_component.yml` in `src/` is evaluated by the Component Manager (verify, per platform version).
+- Arduino + ESP-IDF together: `framework = arduino, espidf` (pioarduino; observe the Arduino core's sdkconfig requirements, including `CONFIG_FREERTOS_HZ=1000`).
 
-## Mehrere Envs
+## Multiple envs
 
-- `[env]` für Gemeinsames, `extends = env:basis` für Varianten; `${env:basis.build_flags}` zum Erweitern statt Überschreiben.
-- Typisch: je Board/Chip ein Env, zusätzlich `_debug`/`_release`, ggf. `native` für Host-Tests.
-- `default_envs` setzen, sonst baut `pio run` alle Envs.
-- Quellauswahl je Env: `build_src_filter = +<*> -<board_b/>`.
+- `[env]` for shared settings, `extends = env:base` for variants; `${env:base.build_flags}` to extend instead of overwrite.
+- Typical: one env per board/chip, plus `_debug`/`_release`, possibly `native` for host tests.
+- Set `default_envs`, otherwise `pio run` builds all envs.
+- Source selection per env: `build_src_filter = +<*> -<board_b/>`.
 
-## ESP8266 unter PlatformIO
+## ESP8266 under PlatformIO
 
 ```ini
 [env:d1_mini]
@@ -150,22 +150,22 @@ board_build.ldscript = eagle.flash.4m2m.ld   ; 4 MB, 2 MB FS
 monitor_filters = esp8266_exception_decoder
 ```
 
-## Typische Fehler
+## Common errors
 
-| Symptom | Ursache / Maßnahme |
+| Symptom | Cause / action |
 |---|---|
-| `ledcAttach`/`timerAlarm` unbekannt | Offizielle Plattform mit Core 2.x → pioarduino mit Core 3.x oder Code auf 2.x-API |
-| Build plötzlich anders/fehlerhaft ohne Codeänderung | Unversionierte Plattform/`lib_deps` → pinnen |
-| `Error: Unknown board ID` | Board nicht in der verwendeten Plattform (z. B. neue Chips nur in pioarduino) |
-| Firmware passt nicht (`region … overflowed`) | Partition/`board_upload.maximum_size` zu klein; `-t size` |
-| Dateisystem leer/`mount failed` | `board_build.filesystem` passt nicht zum Code (`LittleFS` vs. `SPIFFS`) oder `uploadfs` fehlt |
-| PSRAM nicht verfügbar | `-DBOARD_HAS_PSRAM` fehlt bzw. falscher Speichertyp (Quad vs. Octal) |
-| Monitor zeigt nichts (S3) | CDC-Flags, Port; nach Reset neuer Port-Name |
-| sdkconfig-Änderung wirkt nicht | altes `sdkconfig.<env>` → löschen, `-t clean`, neu bauen |
-| Backtrace falsch dekodiert | laufende Firmware ≠ ELF des Envs |
-| Zwei Plattformen gemischt | `.pio/` und `~/.platformio/packages` Konflikte → `pio run -t clean`, Pakete prüfen |
+| `ledcAttach`/`timerAlarm` unknown | Official platform with core 2.x → pioarduino with core 3.x or code on the 2.x API |
+| Build suddenly different/failing without code changes | Unversioned platform/`lib_deps` → pin them |
+| `Error: Unknown board ID` | Board not in the platform used (e.g. new chips only in pioarduino) |
+| Firmware does not fit (`region … overflowed`) | Partition/`board_upload.maximum_size` too small; `-t size` |
+| Filesystem empty/`mount failed` | `board_build.filesystem` does not match the code (`LittleFS` vs. `SPIFFS`) or `uploadfs` missing |
+| PSRAM not available | `-DBOARD_HAS_PSRAM` missing or wrong memory type (quad vs. octal) |
+| Monitor shows nothing (S3) | CDC flags, port; new port name after reset |
+| sdkconfig change has no effect | Old `sdkconfig.<env>` → delete, `-t clean`, rebuild |
+| Backtrace decoded incorrectly | Running firmware ≠ ELF of the env |
+| Two platforms mixed | `.pio/` and `~/.platformio/packages` conflicts → `pio run -t clean`, check packages |
 
-## Quellen
+## Sources
 
 - https://docs.platformio.org/en/latest/platforms/espressif32.html
 - https://docs.platformio.org/en/latest/platforms/espressif8266.html
