@@ -1,0 +1,18 @@
+{
+  "name": "esp-expert",
+  "version": "0.1.0",
+  "description": "ESP32/ESP8266-Firmwareentwicklung: Skill (ESP-IDF, Arduino, PlatformIO, ESPHome) plus MCP-Server für Pin-Prüfung, Partitionen, Panic-Analyse, sdkconfig, Live-Versionen und ESPHome-Validierung.",
+  "author": {
+    "name": "Felix Zösch"
+  },
+  "keywords": [
+    "esp32",
+    "esp8266",
+    "esp-idf",
+    "arduino",
+    "platformio",
+    "esphome",
+    "firmware",
+    "embedded"
+  ]
+}

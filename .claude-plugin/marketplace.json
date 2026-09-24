@@ -1,0 +1,14 @@
+{
+  "name": "esp-expert",
+  "description": "ESP32/ESP8266-Firmware-Werkzeuge für Claude Code",
+  "owner": {
+    "name": "Felix Zösch"
+  },
+  "plugins": [
+    {
+      "name": "esp-expert",
+      "source": "./",
+      "description": "ESP32/ESP8266-Firmware-Skill mit MCP-Werkzeugen"
+    }
+  ]
+}

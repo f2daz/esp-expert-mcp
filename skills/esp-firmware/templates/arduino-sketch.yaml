@@ -1,0 +1,12 @@
+# sketch.yaml (arduino-cli ≥ 1.0) – reproduzierbarer Build mit gepinnten Versionen.
+# Build:  arduino-cli compile --profile esp32c3
+# Upload: arduino-cli upload  --profile esp32c3 -p /dev/cu.usbmodem1101
+profiles:
+  esp32c3:
+    fqbn: esp32:esp32:esp32c3:CDCOnBoot=cdc
+    platforms:
+      - platform: esp32:esp32 (<VERSION>)
+        platform_index_url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+    libraries:
+      - ArduinoJson (<VERSION>)
+default_profile: esp32c3

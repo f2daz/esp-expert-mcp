@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "esp-expert": {
+      "command": "uv",
+      "args": ["run", "--quiet", "--directory", "${CLAUDE_PLUGIN_ROOT}/server", "esp-expert-mcp"]
+    }
+  }
+}
